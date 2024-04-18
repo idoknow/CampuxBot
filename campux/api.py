@@ -55,6 +55,22 @@ class CampuxAPI:
         )
 
         return data["passwd"]
+    
+    async def reset_password(self, uin: int) -> str:
+        """/v1/account/reset
+        
+        POST
+        {
+            "uin": 123456789
+        }
+        """
+        data = await self.do(
+            "PUT",
+            "/v1/account/reset",
+            body={"uin": uin}
+        )
+
+        return data["passwd"]
         
 campux_api = None
 
