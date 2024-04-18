@@ -11,3 +11,7 @@
 pip install -r requirements.txt
 python main.py
 ```
+
+## 已实现的功能
+
+- [x] 注册账号、重置密码
