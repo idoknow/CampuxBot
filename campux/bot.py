@@ -14,8 +14,7 @@ reset_password = on_command("重置密码", rule=to_me(), priority=10, block=Tru
 
 @sign_up.handle()
 async def sign_up_func(event: Event):
-    
-    # await sign_up.finish("注册成功~")
+
     try:
         pwd = await api.campux_api.sign_up(uin=int(event.get_user_id()))
         await sign_up.finish(f"注册成功，初始密码：\n{pwd}")
