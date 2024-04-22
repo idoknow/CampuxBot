@@ -3,7 +3,7 @@ import traceback
 import nonebot
 import nonebot.exception
 from nonebot.rule import to_me
-from nonebot.plugin import on_command
+from nonebot.plugin import on_command, on_regex
 from nonebot.adapters import Event
 
 from ..api import api
@@ -11,6 +11,8 @@ from ..api import api
 
 sign_up = on_command("注册账号", rule=to_me(), priority=10, block=True)
 reset_password = on_command("重置密码", rule=to_me(), priority=10, block=True)
+
+any_message = on_regex(r".*", rule=to_me(), priority=100, block=True)
 
 @sign_up.handle()
 async def sign_up_func(event: Event):
@@ -34,3 +36,7 @@ async def reset_password_func(event: Event):
             return
         traceback.print_exc()
         await reset_password.finish(str(e))
+
+@any_message.handle()
+async def any_message_func(event: Event):
+    await any_message.finish(nonebot.get_driver().config.campux_help_message)
