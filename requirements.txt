@@ -3,3 +3,4 @@ nonebot-adapter-console
 nonebot-adapter-onebot
 
 aiohttp
+redis

@@ -2,6 +2,7 @@ import aiohttp
 import nonebot
 
 from . import errors
+from ..common import entity
 
 
 config = nonebot.get_driver().config
@@ -71,6 +72,18 @@ class CampuxAPI:
         )
 
         return data["passwd"]
+
+    async def get_post_info(self, post_id: int) -> entity.Post:
+        """/v1/post/get-post-info/10
+        
+        GET
+        """
+        data = await self.do(
+            "GET",
+            f"/v1/post/get-post-info/{post_id}"
+        )
+
+        return entity.Post(**data['post'])
         
 campux_api = None
 

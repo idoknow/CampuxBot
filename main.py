@@ -9,7 +9,7 @@ driver = nonebot.get_driver()
 driver.register_adapter(OnebotAdapter)
 
 # 在这里加载插件
-nonebot.load_plugin("campux.imbot.bot")  # 本地插件
+nonebot.load_plugin("campux.imbot.nbmod")  # 本地插件
 
 if __name__ == "__main__":
     nonebot.run()
