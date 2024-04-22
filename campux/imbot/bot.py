@@ -6,7 +6,7 @@ from nonebot.rule import to_me
 from nonebot.plugin import on_command
 from nonebot.adapters import Event
 
-from . import api
+from ..api import api
 
 
 sign_up = on_command("注册账号", rule=to_me(), priority=10, block=True)
