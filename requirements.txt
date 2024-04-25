@@ -5,3 +5,4 @@ nonebot-adapter-onebot
 aiohttp
 redis
 requests
+imgkit
