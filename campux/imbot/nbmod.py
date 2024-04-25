@@ -7,10 +7,15 @@ from nonebot.plugin import on_command, on_regex
 from nonebot.adapters import Event
 
 from ..api import api
+from ..core import app
 
+
+ap: app.Application = None
 
 sign_up = on_command("注册账号", rule=to_me(), priority=10, block=True)
 reset_password = on_command("重置密码", rule=to_me(), priority=10, block=True)
+
+relogin_qzone = on_command("更新cookies", rule=to_me(), priority=10, block=True)
 
 any_message = on_regex(r".*", rule=to_me(), priority=100, block=True)
 
@@ -36,6 +41,22 @@ async def reset_password_func(event: Event):
             return
         traceback.print_exc()
         await reset_password.finish(str(e))
+
+@relogin_qzone.handle()
+async def relogin_qzone_func(event: Event):
+    user_id = int(event.get_user_id())
+
+    if user_id != ap.config.campux_qq_admin_uin:
+        await relogin_qzone.finish("无权限")
+        return
+
+    try:
+        await ap.social.platform_api.relogin()
+    except Exception as e:
+        if isinstance(e, nonebot.exception.FinishedException):
+            return
+        traceback.print_exc()
+        await relogin_qzone.finish(str(e))
 
 @any_message.handle()
 async def any_message_func(event: Event):

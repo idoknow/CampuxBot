@@ -1,15 +1,23 @@
-import nonebot
-from nonebot.adapters.onebot.v11 import Adapter as OnebotAdapter  # 避免重复命名
+import asyncio
 
+import nonebot
 # 初始化 NoneBot
 nonebot.init()
 
-# 注册适配器
-driver = nonebot.get_driver()
-driver.register_adapter(OnebotAdapter)
+from campux.core import app
 
-# 在这里加载插件
-nonebot.load_plugin("campux.imbot.nbmod")  # 本地插件
+
+async def main():
+    ap = await app.create_app()
+
+    from campux.imbot import nbmod
+    nbmod.ap = ap
+
+    await ap.run()
+
 
 if __name__ == "__main__":
-    nonebot.run()
+    
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
+    loop.run_forever()

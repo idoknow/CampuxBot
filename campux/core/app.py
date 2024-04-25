@@ -1,16 +1,29 @@
 from __future__ import annotations
 
+import asyncio
+import threading
+
+import nonebot, nonebot.config
+from nonebot.adapters.onebot.v11 import Adapter as OnebotAdapter  # 避免重复命名
+
 from ..api import api
 from ..mq import redis
 from ..social import mgr as social_mgr
 from ..imbot import mgr as imbot_mgr
+from ..common import cache as cache_mgr
 
 
 class Application:
+
+    cache: cache_mgr.CacheManager
     
     @property
     def cpx_api(self) -> api.CampuxAPI:
         return api.campux_api
+
+    @property
+    def config(self) -> nonebot.config.Config:
+        return nonebot.get_driver().config
     
     mq: redis.RedisStreamMQ
 
@@ -18,10 +31,34 @@ class Application:
 
     imbot: imbot_mgr.IMBotManager
 
+    async def run(self):
 
-def create_app() -> Application:
+        def nonebot_thread():
+            nonebot.run()
+
+        threading.Thread(target=nonebot_thread).start()
+
+        # while True:
+        #     await asyncio.sleep(5)
+
+async def create_app() -> Application:
+
+    # 注册适配器
+    driver = nonebot.get_driver()
+    driver.register_adapter(OnebotAdapter)
+
+    # 在这里加载插件
+    nonebot.load_plugin("campux.imbot.nbmod")  # 本地插件
+
+    # 缓存管理器
+    cache = cache_mgr.CacheManager()
+    cache.load()
+
     ap = Application()
+    ap.cache = cache
+
     ap.mq = redis.RedisStreamMQ(ap)
     ap.social = social_mgr.SocialPlatformManager(ap)
+    await ap.social.initialize()
     ap.imbot = imbot_mgr.IMBotManager(ap)
     return ap
