@@ -6,6 +6,6 @@ COPY . .
 
 RUN pip install --no-cache-dir -r requirements.txt \
     && apt update \
-    && apt install wkhtmltopdf
+    && apt install wkhtmltopdf -y
 
 CMD ["python", "main.py"]
