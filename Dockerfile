@@ -4,8 +4,6 @@ WORKDIR /app
 
 COPY . .
 
-RUN pip install --no-cache-dir -r requirements.txt \
-    && apt update \
-    && apt install wkhtmltopdf -y
+RUN pip install --no-cache-dir -r requirements.txt
 
 CMD ["python", "main.py"]

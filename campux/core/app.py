@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import threading
 
+import requests
 import nonebot, nonebot.config
 from nonebot.adapters.onebot.v11 import Adapter as OnebotAdapter  # 避免重复命名
 
@@ -38,9 +39,6 @@ class Application:
 
         threading.Thread(target=nonebot_thread).start()
 
-        # while True:
-        #     await asyncio.sleep(5)
-
 async def create_app() -> Application:
 
     # 注册适配器
@@ -58,6 +56,7 @@ async def create_app() -> Application:
     ap.cache = cache
 
     ap.mq = redis.RedisStreamMQ(ap)
+    await ap.mq.initialize()
     ap.social = social_mgr.SocialPlatformManager(ap)
     await ap.social.initialize()
     ap.imbot = imbot_mgr.IMBotManager(ap)

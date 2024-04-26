@@ -12,7 +12,7 @@ class CampuxAPI:
     def __init__(self):
         pass
 
-    async def do(
+    async def data(
         self,
         method: str,
         path: str,
@@ -27,8 +27,24 @@ class CampuxAPI:
                 json=body,
                 headers={"Authorization": f"Bearer {config.campux_token}"}
             ) as resp:
-                data = await self.assert_data(resp)
-                return data
+                return await self.assert_data(resp)
+
+    async def read(
+        self,
+        method: str,
+        path: str,
+        params: dict = {},
+        body: dict = {},
+    ) -> bytes:
+        async with aiohttp.ClientSession() as session:
+            async with session.request(
+                method,
+                f"{config.campux_api}{path}",
+                params=params,
+                json=body,
+                headers={"Authorization": f"Bearer {config.campux_token}"}
+            ) as resp:
+                return await resp.read()
 
     async def assert_data(self, resp: aiohttp.ClientResponse) -> dict:
         if resp.status != 200:
@@ -49,7 +65,7 @@ class CampuxAPI:
             "uin": 123456789
         }
         """
-        data = await self.do(
+        data = await self.data(
             "POST",
             "/v1/account/create",
             body={"uin": uin}
@@ -65,7 +81,7 @@ class CampuxAPI:
             "uin": 123456789
         }
         """
-        data = await self.do(
+        data = await self.data(
             "PUT",
             "/v1/account/reset",
             body={"uin": uin}
@@ -78,12 +94,22 @@ class CampuxAPI:
         
         GET
         """
-        data = await self.do(
+        data = await self.data(
             "GET",
             f"/v1/post/get-post-info/{post_id}"
         )
 
         return entity.Post(**data['post'])
+    
+    async def download_image(self, image_key: str) -> bytes:
+        """/v1/post/download-image/{image-key}
+        
+        GET
+        """
+        return await self.read(
+            "GET",
+            f"/v1/post/download-image/{image_key}"
+        )
         
 campux_api = None
 

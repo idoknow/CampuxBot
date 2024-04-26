@@ -5,6 +5,8 @@ import nonebot.exception
 from nonebot.rule import to_me
 from nonebot.plugin import on_command, on_regex
 from nonebot.adapters import Event
+import nonebot.adapters.onebot.v11.message as message
+import asyncio
 
 from ..api import api
 from ..core import app
@@ -50,8 +52,17 @@ async def relogin_qzone_func(event: Event):
         await relogin_qzone.finish("无权限")
         return
 
+    async def qrcode_callback(content: bytes):
+        asyncio.create_task(ap.imbot.send_private_message(
+            ap.config.campux_qq_admin_uin,
+            message=[
+                message.MessageSegment.text("请使用QQ扫描以下二维码以登录QQ空间："),
+                message.MessageSegment.image(content)
+            ]
+        ))
+
     try:
-        await ap.social.platform_api.relogin()
+        await ap.social.platform_api.relogin(qrcode_callback)
     except Exception as e:
         if isinstance(e, nonebot.exception.FinishedException):
             return
