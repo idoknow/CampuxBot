@@ -32,24 +32,31 @@ class RedisStreamMQ:
         # 创建xgroup
         # 检查是否存在同名group
 
-        group_info = await self.redis_client.xinfo_groups(self.ap.config.campux_redis_publish_post_stream)
-
-        group_names = [
-            x['name'].decode('utf-8') for x in group_info
+        streams_to_check = [
+            self.ap.config.campux_redis_publish_post_stream,
+            self.ap.config.campux_redis_new_post_stream
         ]
 
-        if not self.ap.config.campux_redis_group_id in group_names:
-            self.redis_client.xgroup_create(
-                name=self.ap.config.campux_redis_publish_post_stream,
-                groupname=self.ap.config.campux_redis_group_id,
-                id='0',
-                mkstream=True
-            )
+        for stream in streams_to_check:
+            group_info = await self.redis_client.xinfo_groups(stream)
+
+            group_names = [
+                x['name'].decode('utf-8') for x in group_info
+            ]
+
+            if not self.ap.config.campux_redis_group_id in group_names:
+                await self.redis_client.xgroup_create(
+                    name=stream,
+                    groupname=self.ap.config.campux_redis_group_id,
+                    id='0',
+                    mkstream=True
+                )
 
         async def routine_loop():
             await asyncio.sleep(10)
             while True:
                 await self.check_publish_post()
+                await self.check_new_post()
                 await asyncio.sleep(10)
 
         asyncio.create_task(routine_loop())
@@ -87,7 +94,7 @@ class RedisStreamMQ:
                         max=message_id
                     )
 
-                    await self.process_message(message[0])
+                    await self.process_publish_post_message(message[0])
 
             else:
                 streams = await self.redis_client.xreadgroup(
@@ -101,12 +108,12 @@ class RedisStreamMQ:
                 # 检查是否有新的发布稿件请求
                 for stream in streams:
                     for message in stream[1]:
-                        await self.process_message(message)
+                        await self.process_publish_post_message(message)
         except Exception as e:
             logger.error("处理发布稿件请求时出现错误。")
             logger.error(e)
 
-    async def process_message(self, message: tuple):
+    async def process_publish_post_message(self, message: tuple):
         
         logger.info("处理消息: {}".format(message))
 
@@ -127,3 +134,72 @@ class RedisStreamMQ:
                 ))
 
             logger.warning("social模块未准备好，无法发布稿件。")
+
+    async def check_new_post(self):
+        try:
+            logger.info("检查新稿件消息...")
+
+            # 检查pending
+            pending = await self.redis_client.xpending(
+                self.ap.config.campux_redis_new_post_stream,
+                self.ap.config.campux_redis_group_id
+            )
+
+            if pending['pending'] > 0:
+
+                logger.info("处理未确认的消息...")
+
+                # 获取未确认的消息
+                messages = await self.redis_client.xpending_range(
+                    self.ap.config.campux_redis_new_post_stream,
+                    self.ap.config.campux_redis_group_id,
+                    min='-',
+                    max='+',
+                    count=1
+                )
+
+                for message in messages:
+                    message_id = message['message_id'].decode('utf-8')
+
+                    # 获取消息
+                    message = await self.redis_client.xrange(
+                        self.ap.config.campux_redis_new_post_stream,
+                        min=message_id,
+                        max=message_id
+                    )
+
+                    await self.process_new_post_message(message[0])
+            else:
+                streams = await self.redis_client.xreadgroup(
+                    groupname=self.ap.config.campux_redis_group_id,
+                    consumername=self.ap.config.campux_qq_bot_uin,
+                    streams={self.ap.config.campux_redis_new_post_stream: '>'},
+                    count=1,
+                    block=5000
+                )
+
+                # 检查是否有新的发布稿件请求
+                for stream in streams:
+                    for message in stream[1]:
+                        await self.process_new_post_message(message)
+        except Exception as e:
+            logger.error("处理新稿件消息时出现错误。")
+            logger.error(e)
+
+    async def process_new_post_message(self, message: tuple):
+        # 检查 config.campux_qq_group_review是否为true，若有，发送稿件的内容到群里
+        logger.info("处理消息: {}".format(message)) 
+
+        post_id = int(message[1][b'post_id'].decode('utf-8'))
+
+        post = await self.ap.cpx_api.get_post_info(post_id)
+
+        logger.info(f"新稿件：{post}")
+
+        if self.ap.config.campux_qq_group_review:
+            asyncio.create_task(self.ap.imbot.send_group_message(
+                self.ap.config.campux_review_qq_group_id,
+                f"新稿件：{post.text}"
+            ))
+            # 确认消息
+        await self.redis_client.xack(self.ap.config.campux_redis_new_post_stream, self.ap.config.campux_redis_group_id, message[0])

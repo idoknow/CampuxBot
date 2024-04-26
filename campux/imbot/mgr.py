@@ -23,3 +23,15 @@ class IMBotManager:
             user_id=user_id,
             message=message
         )
+
+    async def send_group_message(
+        self,
+        group_id: int,
+        message
+    ):
+        bot = nonebot.get_bot()
+
+        await bot.send_group_msg(
+            group_id=group_id,
+            message=message
+        )
