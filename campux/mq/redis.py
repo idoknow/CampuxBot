@@ -50,7 +50,7 @@ class RedisStreamMQ:
             await asyncio.sleep(10)
             while True:
                 await self.check_publish_post()
-                await asyncio.sleep(30)
+                await asyncio.sleep(10)
 
         asyncio.create_task(routine_loop())
 

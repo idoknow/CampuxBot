@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import time
-import datetime
 import aiohttp
 
 from ...core import app
@@ -15,18 +13,22 @@ jinja_template = """<!DOCTYPE html>
     <style>
         #nickname {
             font-weight: bold;
-            font-size: 4rem;
+            font-size: 4.5rem;
             line-height: 1.2;
             margin-bottom: 0;
         }
 
         #words {
             font-family: Microsoft Yahei;
-            font-size: 3rem;
+            font-size: 3.3rem;
             display: block;
-            margin-top: 32px;
+            width: 65rem;
+            margin-top: 4rem;
             word-spacing: 0.3rem;
             letter-spacing: 0.3rem;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
         }
 
         img {
@@ -39,27 +41,28 @@ jinja_template = """<!DOCTYPE html>
         #footer {
             display: flex;
             justify-content: space-between;
-            width: calc(100%);
-            padding: 0px 2.5rem;
+            width: 100%;
+            padding: 0px 2rem;
             font-size: 2.2rem;
+            margin: 1rem;
             color: #666
         }
 
         #bg-fixed-br {
             position: fixed;
-            bottom: -250px;
-            right: -250px;
+            top: -120px;
+            right: -170px;
             width: 500px;
             height: 500px;
-            opacity: 0.15;
+            opacity: 0.25;
         }
     </style>
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
 </head>
 
 <body style="margin: 0">
-    <div style="background-color: #1E88E5; height: 5%; width: calc(100% + 50px); padding: 16px; border-radius: 0 0 8px 8px; font-weight: bold">
-        <span id="title-bar" style="color: white; font-size: 2.5rem; padding: 1rem;">{{ banner }}</span>
+    <div id="title-bar" style="background-color: #1E88E5; height: 5%; width: calc(100% + 50px); padding: 16px; border-radius: 0 0 8px 8px; font-weight: bold">
+        <span  style="color: white; font-size: 2.5rem; padding: 1rem;">{{ banner }}</span>
     </div>
     <div style="padding: 2.5rem; min-height: 550px;">
         <div style="display: flex;">
@@ -82,7 +85,7 @@ jinja_template = """<!DOCTYPE html>
 
 </html>
 
-<script>
+<script type="text/javascript">
     if (document.getElementById('title-bar').innerText.trim() === '') {
         document.getElementById('title-bar').style.display = 'none';
     }
