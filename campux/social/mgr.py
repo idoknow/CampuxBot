@@ -40,10 +40,10 @@ class SocialPlatformManager:
         if not await self.platform_api.token_valid() and self.platform_api.cookies != self.current_invalid_cookies:
             nonebot.logger.info("QQ空间cookies已失效，发送通知。")
 
-            await self.ap.imbot.send_private_message(
+            asyncio.create_task(self.ap.imbot.send_private_message(
                 self.ap.config.campux_qq_admin_uin,
                 "QQ空间cookies已失效，请发送 #更新cookies 命令进行重新登录。"
-            )
+            ))
 
             self.current_invalid_cookies = self.platform_api.cookies
 

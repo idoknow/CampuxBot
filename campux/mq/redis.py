@@ -1,12 +1,11 @@
 from __future__ import annotations
-
 import asyncio
 import time
+from nonebot import logger
+from ..core import app
 
 import redis.asyncio as redis
-from nonebot import logger
 
-from ..core import app
 
 
 class RedisStreamMQ:
@@ -55,29 +54,29 @@ class RedisStreamMQ:
         async def routine_loop():
             await asyncio.sleep(10)
             while True:
-                await self.check_publish_post()
-                await self.check_new_post()
+                await self.process_stream(self.ap.config.campux_redis_publish_post_stream, self.check_publish_post)
+                await self.process_stream(self.ap.config.campux_redis_new_post_stream, self.check_new_post)
                 await asyncio.sleep(10)
 
         asyncio.create_task(routine_loop())
 
-    async def check_publish_post(self):
+    async def process_stream(self, stream: str, process_message_func: callable):
         try:
-            logger.info("检查稿件发送请求消息...")
+            logger.info(f"检查{stream}消息...")
 
             # 检查pending
             pending = await self.redis_client.xpending(
-                self.ap.config.campux_redis_publish_post_stream,
+                stream,
                 self.ap.config.campux_redis_group_id
             )
 
             if pending['pending'] > 0:
 
-                logger.info("处理未确认的消息...")
+                logger.info(f"处理{stream}未确认的消息...")
 
                 # 获取未确认的消息
                 messages = await self.redis_client.xpending_range(
-                    self.ap.config.campux_redis_publish_post_stream,
+                    stream,
                     self.ap.config.campux_redis_group_id,
                     min='-',
                     max='+',
@@ -89,32 +88,31 @@ class RedisStreamMQ:
 
                     # 获取消息
                     message = await self.redis_client.xrange(
-                        self.ap.config.campux_redis_publish_post_stream,
+                        stream,
                         min=message_id,
                         max=message_id
                     )
 
-                    await self.process_publish_post_message(message[0])
+                    await process_message_func(message[0])
 
             else:
                 streams = await self.redis_client.xreadgroup(
                     groupname=self.ap.config.campux_redis_group_id,
                     consumername=self.ap.config.campux_qq_bot_uin,
-                    streams={self.ap.config.campux_redis_publish_post_stream: '>'},
+                    streams={stream: '>'},
                     count=1,
                     block=5000
                 )
 
-                # 检查是否有新的发布稿件请求
+                # 检查是否有新的消息
                 for stream in streams:
                     for message in stream[1]:
-                        await self.process_publish_post_message(message)
+                        await process_message_func(message)
         except Exception as e:
-            logger.error("处理发布稿件请求时出现错误。")
+            logger.error(f"处理{stream}消息时出现错误。")
             logger.error(e)
 
-    async def process_publish_post_message(self, message: tuple):
-        
+    async def check_publish_post(self, message: tuple):
         logger.info("处理消息: {}".format(message))
 
         post_id = int(message[1][b'post_id'].decode('utf-8'))
@@ -135,60 +133,8 @@ class RedisStreamMQ:
 
             logger.warning("social模块未准备好，无法发布稿件。")
 
-    async def check_new_post(self):
-        try:
-            logger.info("检查新稿件消息...")
-
-            # 检查pending
-            pending = await self.redis_client.xpending(
-                self.ap.config.campux_redis_new_post_stream,
-                self.ap.config.campux_redis_group_id
-            )
-
-            if pending['pending'] > 0:
-
-                logger.info("处理未确认的消息...")
-
-                # 获取未确认的消息
-                messages = await self.redis_client.xpending_range(
-                    self.ap.config.campux_redis_new_post_stream,
-                    self.ap.config.campux_redis_group_id,
-                    min='-',
-                    max='+',
-                    count=1
-                )
-
-                for message in messages:
-                    message_id = message['message_id'].decode('utf-8')
-
-                    # 获取消息
-                    message = await self.redis_client.xrange(
-                        self.ap.config.campux_redis_new_post_stream,
-                        min=message_id,
-                        max=message_id
-                    )
-
-                    await self.process_new_post_message(message[0])
-            else:
-                streams = await self.redis_client.xreadgroup(
-                    groupname=self.ap.config.campux_redis_group_id,
-                    consumername=self.ap.config.campux_qq_bot_uin,
-                    streams={self.ap.config.campux_redis_new_post_stream: '>'},
-                    count=1,
-                    block=5000
-                )
-
-                # 检查是否有新的发布稿件请求
-                for stream in streams:
-                    for message in stream[1]:
-                        await self.process_new_post_message(message)
-        except Exception as e:
-            logger.error("处理新稿件消息时出现错误。")
-            logger.error(e)
-
-    async def process_new_post_message(self, message: tuple):
-        # 检查 config.campux_qq_group_review是否为true，若有，发送稿件的内容到群里
-        logger.info("处理消息: {}".format(message)) 
+    async def check_new_post(self, message: tuple):
+        logger.info("处理消息: {}".format(message))
 
         post_id = int(message[1][b'post_id'].decode('utf-8'))
 
@@ -199,7 +145,7 @@ class RedisStreamMQ:
         if self.ap.config.campux_qq_group_review:
             asyncio.create_task(self.ap.imbot.send_group_message(
                 self.ap.config.campux_review_qq_group_id,
-                f"新稿件：{post.text}"
+                f"新稿件: \n\n{post.text}\n\nID: #{post.id}\n用户: {post.uin}\n图片: {post.images}\n时间: {post.created_at}\n匿名: {'是' if post.anon else '否'}"
             ))
             # 确认消息
         await self.redis_client.xack(self.ap.config.campux_redis_new_post_stream, self.ap.config.campux_redis_group_id, message[0])
