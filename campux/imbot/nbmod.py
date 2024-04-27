@@ -93,6 +93,9 @@ approve_post = on_command("通过", rule=to_me() & is_group & is_review_allow, p
 # #拒绝 <原因> [#id]
 reject_post = on_command("拒绝", rule=to_me() & is_group & is_review_allow, priority=10, block=True)
 
+# 其他命令，发帮助信息
+any_message_group = on_regex(r".*", rule=to_me() & is_group & is_review_allow, priority=100, block=True)
+
 
 @approve_post.handle()
 async def approve_post_func(event: Event):
@@ -151,3 +154,7 @@ async def reject_post_func(event: Event):
             return
         traceback.print_exc()
         await reject_post.finish(str(e))
+
+@any_message_group.handle()
+async def any_message_group_func(event: Event):
+    await any_message_group.finish(ap.config.campux_review_help_message)
