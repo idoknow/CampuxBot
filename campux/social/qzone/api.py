@@ -18,10 +18,6 @@ def generate_gtk(skey) -> str:
         hash_val += (hash_val << 5) + ord(skey[i])
     return str(hash_val & 2147483647)
 
-def image_to_base64(image: bytes) -> str:
-    pic_base64 = base64.b64encode(image)
-
-    return str(pic_base64)[2:-1]
 
 def get_picbo_and_richval(upload_result):
     json_data = upload_result
@@ -108,6 +104,11 @@ class QzoneAPI:
                 if i == retry - 1:
                     return False
 
+    def image_to_base64(self, image: bytes) -> str:
+        pic_base64 = base64.b64encode(image)
+
+        return str(pic_base64)[2:-1]
+
     async def relogin(self, callback: callable):
         loginmgr = login.QzoneLogin()
 
@@ -175,7 +176,7 @@ class QzoneAPI:
                 "backUrls": "http://upbak.photo.qzone.qq.com/cgi-bin/upload/cgi_upload_image,http://119.147.64.75/cgi-bin/upload/cgi_upload_image",
                 "url": "https://up.qzone.qq.com/cgi-bin/upload/cgi_upload_image?g_tk=" + self.gtk2,
                 "base64": "1",
-                "picfile": image_to_base64(image),
+                "picfile": self.image_to_base64(image),
             },
             headers={
                 'referer': 'https://user.qzone.qq.com/' + str(self.uin),

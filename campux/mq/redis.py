@@ -141,16 +141,6 @@ class RedisStreamMQ:
 
         post_id = int(message[1][b'post_id'].decode('utf-8'))
 
-        post = await self.ap.cpx_api.get_post_info(post_id)
+        await self.ap.imbot.send_new_post_notify(post_id)
 
-        logger.info(f"新稿件：{post}")
-
-        if self.ap.config.campux_qq_group_review:
-            time_str = datetime.datetime.fromtimestamp(
-                post.time_stamp).strftime("%Y-%m-%d %H:%M:%S")
-            asyncio.create_task(self.ap.imbot.send_group_message(
-                self.ap.config.campux_review_qq_group_id,
-                f"新稿件: \n\n{post.text}\n\nID: #{post.id}\n用户: {'匿名( '+str(post.uin)+' )' if post.anon else post.uin}\n图片: {post.images}\n时间: {time_str}"
-            ))
-            # 确认消息
         await self.redis_client.xack(self.ap.config.campux_redis_new_post_stream, self.ap.config.campux_redis_group_id, message[0])
