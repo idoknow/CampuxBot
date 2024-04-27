@@ -1,12 +1,13 @@
 from __future__ import annotations
 import asyncio
 import time
+import datetime
 import traceback
-from nonebot import logger
-from ..core import app
 
+from nonebot import logger
 import redis.asyncio as redis
 
+from ..core import app
 
 
 class RedisStreamMQ:
@@ -145,9 +146,11 @@ class RedisStreamMQ:
         logger.info(f"新稿件：{post}")
 
         if self.ap.config.campux_qq_group_review:
+            time_str = datetime.datetime.fromtimestamp(
+                post.time_stamp).strftime("%Y-%m-%d %H:%M:%S")
             asyncio.create_task(self.ap.imbot.send_group_message(
                 self.ap.config.campux_review_qq_group_id,
-                f"新稿件: \n\n{post.text}\n\nID: #{post.id}\n用户: {'匿名( '+str(post.uin)+' )' if post.anon else post.uin}\n图片: {post.images}\n时间: {post.created_at}"
+                f"新稿件: \n\n{post.text}\n\nID: #{post.id}\n用户: {'匿名( '+str(post.uin)+' )' if post.anon else post.uin}\n图片: {post.images}\n时间: {time_str}"
             ))
             # 确认消息
         await self.redis_client.xack(self.ap.config.campux_redis_new_post_stream, self.ap.config.campux_redis_group_id, message[0])

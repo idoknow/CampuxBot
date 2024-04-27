@@ -41,3 +41,6 @@ class Post(pydantic.BaseModel):
 
     created_at: str
     """创建时间"""
+
+    time_stamp: int
+    """时间戳"""

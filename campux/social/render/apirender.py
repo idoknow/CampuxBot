@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import datetime
+
 import aiohttp
 
 from ...core import app
@@ -101,7 +103,7 @@ class IdoknowAPIRender:
 
     async def render(self, post: entity.Post) -> bytes:
 
-        time_str = post.created_at
+        time_str = datetime.datetime.fromtimestamp(post.time_stamp).strftime("%Y-%m-%d %H:%M:%S")
 
         jinja_data = {
             "username": str(post.uin),

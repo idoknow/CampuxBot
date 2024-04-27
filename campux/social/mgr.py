@@ -74,9 +74,9 @@ class SocialPlatformManager:
                 self.ap.config.campux_review_qq_group_id,
                 f"已成功发表：#{post.id}"
             ))
-        except:
+        except Exception as e:
             traceback.print_exc()
             asyncio.create_task(self.ap.imbot.send_group_message(
                 self.ap.config.campux_review_qq_group_id,
-                f"发表失败：#{post_id}\n{traceback.format_exc()}"
+                f"发表失败：#{post_id}\n{str(e)}"
             ))
