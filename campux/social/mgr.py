@@ -69,6 +69,9 @@ class SocialPlatformManager:
                 images_to_post
             )
 
+            # 通知到hash 
+            await self.ap.mq.mark_post_published(post_id)
+
             # 通知到群里
             asyncio.create_task(self.ap.imbot.send_group_message(
                 self.ap.config.campux_review_qq_group_id,

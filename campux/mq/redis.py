@@ -22,6 +22,9 @@ class RedisStreamMQ:
         self.ap = ap
         self.relogin_notify_times = []
 
+    def get_instance_identity(self) -> str:
+        return f"campuxbot_{self.ap.config.campux_qq_bot_uin}"
+
     async def initialize(self):
         self.redis_client = redis.Redis(
             host=self.ap.config.campux_redis_host,
@@ -45,11 +48,12 @@ class RedisStreamMQ:
                 x['name'].decode('utf-8') for x in group_info
             ]
 
-            if not self.ap.config.campux_redis_group_id in group_names:
+            if not self.get_instance_identity() in group_names:
                 await self.redis_client.xgroup_create(
                     name=stream,
-                    groupname=self.ap.config.campux_redis_group_id,
-                    id='0',
+                    groupname=self.get_instance_identity(),
+                    # 从最后开始
+                    id='$',
                     mkstream=True
                 )
 
@@ -69,7 +73,7 @@ class RedisStreamMQ:
             # 检查pending
             pending = await self.redis_client.xpending(
                 stream,
-                self.ap.config.campux_redis_group_id
+                self.get_instance_identity()
             )
 
             if pending['pending'] > 0:
@@ -79,7 +83,7 @@ class RedisStreamMQ:
                 # 获取未确认的消息
                 messages = await self.redis_client.xpending_range(
                     stream,
-                    self.ap.config.campux_redis_group_id,
+                    self.get_instance_identity(),
                     min='-',
                     max='+',
                     count=1
@@ -99,7 +103,7 @@ class RedisStreamMQ:
 
             else:
                 streams = await self.redis_client.xreadgroup(
-                    groupname=self.ap.config.campux_redis_group_id,
+                    groupname=self.get_instance_identity(),
                     consumername=self.ap.config.campux_qq_bot_uin,
                     streams={stream: '>'},
                     count=1,
@@ -123,7 +127,7 @@ class RedisStreamMQ:
         if await self.ap.social.can_operate():
             await self.ap.social.publish_post(post_id)
             # 确认消息
-            await self.redis_client.xack(self.ap.config.campux_redis_publish_post_stream, self.ap.config.campux_redis_group_id, message[0])
+            await self.redis_client.xack(self.ap.config.campux_redis_publish_post_stream, self.get_instance_identity(), message[0])
         else:
             now = time.time()
 
@@ -143,4 +147,11 @@ class RedisStreamMQ:
 
         await self.ap.imbot.send_new_post_notify(post_id)
 
-        await self.redis_client.xack(self.ap.config.campux_redis_new_post_stream, self.ap.config.campux_redis_group_id, message[0])
+        await self.redis_client.xack(self.ap.config.campux_redis_new_post_stream, self.get_instance_identity(), message[0])
+
+    async def mark_post_published(self, post_id):
+        await self.redis_client.hset(
+            f"publish_post_status:{post_id}",
+            self.get_instance_identity(),
+            1
+        )
