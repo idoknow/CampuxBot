@@ -83,6 +83,8 @@ async def is_group(event: Event):
     return type(event) == ob11_event.GroupMessageEvent
 
 async def is_review_allow(event: Event):
+    if type(event) == ob11_event.PrivateMessageEvent:
+        return False
     return ap.config.campux_qq_group_review and event.group_id == ap.config.campux_review_qq_group_id
 
 # #通过 [#id]
