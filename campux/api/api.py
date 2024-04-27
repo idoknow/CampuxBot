@@ -98,6 +98,8 @@ class CampuxAPI:
             "GET",
             f"/v1/post/get-post-info/{post_id}"
         )
+        if data['post'] is None:
+            return None
 
         return entity.Post(**data['post'])
     
@@ -109,6 +111,26 @@ class CampuxAPI:
         return await self.read(
             "GET",
             f"/v1/post/download-image/{image_key}"
+        )
+    
+    async def review_post(self, post_id: int, option: str, comment: str):
+        """/v1/post/review-post
+        
+        POST
+        {
+            "post_id": 1,
+            "option": "approve",
+            "comment": ""
+        }
+        """
+        return await self.data(
+            "POST",
+            "/v1/post/review-post",
+            body={
+                "post_id": post_id,
+                "option": option,
+                "comment": comment
+            }
         )
         
 campux_api = None

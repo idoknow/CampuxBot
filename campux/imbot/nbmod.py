@@ -6,6 +6,7 @@ from nonebot.rule import to_me
 from nonebot.plugin import on_command, on_regex
 from nonebot.adapters import Event
 import nonebot.adapters.onebot.v11.message as message
+import nonebot.adapters.onebot.v11.event as ob11_event
 import asyncio
 
 from ..api import api
@@ -14,12 +15,16 @@ from ..core import app
 
 ap: app.Application = None
 
-sign_up = on_command("注册账号", rule=to_me(), priority=10, block=True)
-reset_password = on_command("重置密码", rule=to_me(), priority=10, block=True)
+async def is_private(event: Event):
+    return type(event) == ob11_event.PrivateMessageEvent
 
-relogin_qzone = on_command("更新cookies", rule=to_me(), priority=10, block=True)
+# ========= 私聊 =========
+sign_up = on_command("注册账号", rule=to_me() & is_private, priority=10, block=True)
+reset_password = on_command("重置密码", rule=to_me() & is_private, priority=10, block=True)
 
-any_message = on_regex(r".*", rule=to_me(), priority=100, block=True)
+relogin_qzone = on_command("更新cookies", rule=to_me() & is_private, priority=10, block=True)
+
+any_message = on_regex(r".*", rule=to_me() & is_private, priority=100, block=True)
 
 @sign_up.handle()
 async def sign_up_func(event: Event):
@@ -72,3 +77,75 @@ async def relogin_qzone_func(event: Event):
 @any_message.handle()
 async def any_message_func(event: Event):
     await any_message.finish(nonebot.get_driver().config.campux_help_message)
+
+# ========= 群聊 =========
+async def is_group(event: Event):
+    return type(event) == ob11_event.GroupMessageEvent
+
+async def is_review_allow(event: Event):
+    return ap.config.campux_qq_group_review and event.group_id == ap.config.campux_review_qq_group_id
+
+# #通过 [#id]
+approve_post = on_command("通过", rule=to_me() & is_group & is_review_allow, priority=10, block=True)
+
+# #拒绝 <原因> [#id]
+reject_post = on_command("拒绝", rule=to_me() & is_group & is_review_allow, priority=10, block=True)
+
+
+@approve_post.handle()
+async def approve_post_func(event: Event):
+    try:
+        msg_text = event.get_message().extract_plain_text()
+        
+        params = msg_text.split(" ")[1:]
+
+        if len(params) == 1:
+            post_id = int(params[0])
+            comment = ""
+
+            post = await api.campux_api.get_post_info(post_id)
+
+            if post is None:
+                await approve_post.finish(f"稿件 #{post_id} 不存在")
+            else:
+                if post.status == "pending_approval":
+                    await ap.cpx_api.review_post(post_id, "approve", comment)
+                    await approve_post.finish(f"已通过 #{post_id}")
+                else:
+                    await approve_post.finish(f"稿件 #{post_id} 状态不是待审核")
+        else:
+            await approve_post.finish(ap.config.campux_review_help_message)
+    except Exception as e:
+        if isinstance(e, nonebot.exception.FinishedException):
+            return
+        traceback.print_exc()
+        await approve_post.finish(str(e))
+
+@reject_post.handle()
+async def reject_post_func(event: Event):
+    try:
+        msg_text = event.get_message().extract_plain_text()
+        
+        params = msg_text.split(" ")[1:]
+
+        if len(params) >= 2:
+            post_id = int(params[-1])
+            comment = " ".join(params[:-1])
+
+            post = await api.campux_api.get_post_info(post_id)
+
+            if post is None:
+                await reject_post.finish(f"稿件 #{post_id} 不存在")
+            else:
+                if post.status == "pending_approval":
+                    await ap.cpx_api.review_post(post_id, "reject", comment)
+                    await reject_post.finish(f"已拒绝 #{post_id}")
+                else:
+                    await reject_post.finish(f"稿件 #{post_id} 状态不是待审核")
+        else:
+            await reject_post.finish(ap.config.campux_review_help_message)
+    except Exception as e:
+        if isinstance(e, nonebot.exception.FinishedException):
+            return
+        traceback.print_exc()
+        await reject_post.finish(str(e))

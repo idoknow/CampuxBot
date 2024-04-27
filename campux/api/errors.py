@@ -5,4 +5,4 @@ class APIError(Exception):
         self.message = message
 
     def __str__(self):
-        return f"操作失败: {self.status} {self.message}"
+        return f"操作失败: {self.message}"

@@ -1,6 +1,7 @@
 from __future__ import annotations
 import asyncio
 import time
+import traceback
 from nonebot import logger
 from ..core import app
 
@@ -111,6 +112,7 @@ class RedisStreamMQ:
         except Exception as e:
             logger.error(f"处理{stream}消息时出现错误。")
             logger.error(e)
+            traceback.print_exc()
 
     async def check_publish_post(self, message: tuple):
         logger.info("处理消息: {}".format(message))
@@ -145,7 +147,7 @@ class RedisStreamMQ:
         if self.ap.config.campux_qq_group_review:
             asyncio.create_task(self.ap.imbot.send_group_message(
                 self.ap.config.campux_review_qq_group_id,
-                f"新稿件: \n\n{post.text}\n\nID: #{post.id}\n用户: {post.uin}\n图片: {post.images}\n时间: {post.created_at}\n匿名: {'是' if post.anon else '否'}"
+                f"新稿件: \n\n{post.text}\n\nID: #{post.id}\n用户: {'匿名( '+str(post.uin)+' )' if post.anon else post.uin}\n图片: {post.images}\n时间: {post.created_at}"
             ))
             # 确认消息
         await self.redis_client.xack(self.ap.config.campux_redis_new_post_stream, self.ap.config.campux_redis_group_id, message[0])
