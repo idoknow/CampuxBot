@@ -85,13 +85,16 @@ async def is_group(event: Event):
 async def is_review_allow(event: Event):
     if type(event) == ob11_event.PrivateMessageEvent:
         return False
-    return ap.config.campux_qq_group_review and event.group_id == ap.config.campux_review_qq_group_id
+    return ap.config.campux_qq_group_review and int(event.group_id) == int(ap.config.campux_review_qq_group_id)
 
-# #通过 [#id]
+# #通过 [id]
 approve_post = on_command("通过", rule=to_me() & is_group & is_review_allow, priority=10, block=True)
 
-# #拒绝 <原因> [#id]
+# #拒绝 <原因> [id]
 reject_post = on_command("拒绝", rule=to_me() & is_group & is_review_allow, priority=10, block=True)
+
+# 重发 <id>
+resend_post = on_command("重发", rule=to_me() & is_group & is_review_allow, priority=10, block=True)
 
 # 其他命令，发帮助信息
 any_message_group = on_regex(r".*", rule=to_me() & is_group & is_review_allow, priority=100, block=True)
@@ -154,6 +157,31 @@ async def reject_post_func(event: Event):
             return
         traceback.print_exc()
         await reject_post.finish(str(e))
+
+@resend_post.handle()
+async def resend_post_func(event: Event):
+    try:
+        msg_text = event.get_message().extract_plain_text()
+        
+        params = msg_text.split(" ")[1:]
+
+        if len(params) == 1:
+            post_id = int(params[0])
+
+            post = await api.campux_api.get_post_info(post_id)
+
+            if post is None:
+                await resend_post.finish(f"稿件 #{post_id} 不存在")
+            else:
+                nonebot.logger.info(f"正在重发稿件 {post_id}")
+                await ap.social.publish_post(post_id)
+        else:
+            await resend_post.finish(ap.config.campux_review_help_message)
+    except Exception as e:
+        if isinstance(e, nonebot.exception.FinishedException):
+            return
+        traceback.print_exc()
+        await resend_post.finish(str(e))
 
 @any_message_group.handle()
 async def any_message_group_func(event: Event):

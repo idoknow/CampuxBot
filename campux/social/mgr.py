@@ -68,5 +68,15 @@ class SocialPlatformManager:
                 f"#{post_id}",
                 images_to_post
             )
+
+            # 通知到群里
+            asyncio.create_task(self.ap.imbot.send_group_message(
+                self.ap.config.campux_review_qq_group_id,
+                f"已成功发表：#{post.id}"
+            ))
         except:
             traceback.print_exc()
+            asyncio.create_task(self.ap.imbot.send_group_message(
+                self.ap.config.campux_review_qq_group_id,
+                f"发表失败：#{post_id}\n{traceback.format_exc()}"
+            ))
