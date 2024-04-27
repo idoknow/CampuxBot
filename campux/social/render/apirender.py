@@ -108,7 +108,7 @@ class IdoknowAPIRender:
             "content": post.text,
             "user_avatar": f"https://q1.qlogo.cn/g?b=qq&amp;nk={post.uin}&amp;s=640",
             "foot_left_hint": f"{post.uin} 发表于 {time_str}",
-            "foot_right_hint": "开发 @Rockchin | @Soulter",
+            "foot_right_hint": "开发 @RockChinQ | @Soulter",
             "bg_fixed_br": f"https://q1.qlogo.cn/g?b=qq&amp;nk={self.ap.config.campux_qq_bot_uin}&amp;s=640",
             "banner": "",
         }
