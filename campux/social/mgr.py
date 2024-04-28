@@ -78,7 +78,7 @@ class SocialPlatformManager:
                 op=0,
                 old_stat="in_queue",
                 new_stat="in_queue",
-                message=f"{self.ap.config.campux_qq_bot_uin} 发表稿件"
+                comment=f"{self.ap.config.campux_qq_bot_uin} 发表稿件"
             )
 
             # 通知到群里
