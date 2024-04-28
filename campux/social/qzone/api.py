@@ -101,6 +101,7 @@ class QzoneAPI:
                 today, total = await self.get_visitor_amount()
                 return True
             except Exception as e:
+                traceback.print_exc()
                 if i == retry - 1:
                     return False
 
