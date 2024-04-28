@@ -122,7 +122,7 @@ async def approve_post_func(event: Event):
                     # 打日志
                     await ap.cpx_api.post_post_log(
                         post_id,
-                        event.get_user_id(),
+                        int(event.get_user_id()),
                         "pending_approval",
                         "approved",
                         "群内审核通过"
@@ -161,7 +161,7 @@ async def reject_post_func(event: Event):
                     # 打日志
                     await ap.cpx_api.post_post_log(
                         post_id,
-                        event.get_user_id(),
+                        int(event.get_user_id()),
                         "pending_approval",
                         "rejected",
                         f"群内审核拒绝，原因：{comment}"
