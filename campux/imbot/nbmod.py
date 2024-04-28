@@ -118,6 +118,16 @@ async def approve_post_func(event: Event):
             else:
                 if post.status == "pending_approval":
                     await ap.cpx_api.review_post(post_id, "approve", comment)
+
+                    # 打日志
+                    await ap.cpx_api.post_post_log(
+                        post_id,
+                        event.get_user_id(),
+                        "pending_approval",
+                        "approved",
+                        "群内审核通过"
+                    )
+
                     await approve_post.finish(f"已通过 #{post_id}")
                 else:
                     await approve_post.finish(f"稿件 #{post_id} 状态不是待审核")
@@ -147,6 +157,16 @@ async def reject_post_func(event: Event):
             else:
                 if post.status == "pending_approval":
                     await ap.cpx_api.review_post(post_id, "reject", comment)
+
+                    # 打日志
+                    await ap.cpx_api.post_post_log(
+                        post_id,
+                        event.get_user_id(),
+                        "pending_approval",
+                        "rejected",
+                        f"群内审核拒绝，原因：{comment}"
+                    )
+
                     await reject_post.finish(f"已拒绝 #{post_id}")
                 else:
                     await reject_post.finish(f"稿件 #{post_id} 状态不是待审核")
