@@ -72,6 +72,15 @@ class SocialPlatformManager:
             # 通知到hash 
             await self.ap.mq.mark_post_published(post_id)
 
+            # 记录log
+            await self.ap.cpx_api.post_post_log(
+                post_id,
+                op=0,
+                old_stat="in_queue",
+                new_stat="in_queue",
+                message=f"{self.ap.config.campux_qq_bot_uin} 发表稿件"
+            )
+
             # 通知到群里
             asyncio.create_task(self.ap.imbot.send_group_message(
                 self.ap.config.campux_review_qq_group_id,

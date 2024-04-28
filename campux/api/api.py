@@ -132,6 +132,37 @@ class CampuxAPI:
                 "comment": comment
             }
         )
+    
+    async def post_post_log(
+        self,
+        post_id: int,
+        op: int,
+        old_stat: str,
+        new_stat: str,
+        comment: str
+    ):
+        """/v1/post/post-log
+        
+        POST
+        {
+            "post_id": 1,
+            "op": 1,
+            "old_stat": "pending_approval",
+            "new_stat": "approved",
+            "comment": ""
+        }
+        """
+        return await self.data(
+            "POST",
+            "/v1/post/post-log",
+            body={
+                "post_id": post_id,
+                "op": op,
+                "old_stat": old_stat,
+                "new_stat": new_stat,
+                "comment": comment
+            }
+        )
         
 campux_api = None
 
