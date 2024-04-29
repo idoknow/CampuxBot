@@ -1,4 +1,5 @@
 import traceback
+import time
 
 import nonebot
 import nonebot.exception
@@ -18,11 +19,25 @@ ap: app.Application = None
 async def is_private(event: Event):
     return type(event) == ob11_event.PrivateMessageEvent
 
-# ========= 私聊 =========
-sign_up = on_command("注册账号", rule=to_me() & is_private, priority=10, block=True)
-reset_password = on_command("重置密码", rule=to_me() & is_private, priority=10, block=True)
+async def not_bot_self(event: Event):
+    return int(event.get_user_id()) != ap.config.campux_qq_bot_uin
 
-relogin_qzone = on_command("更新cookies", rule=to_me() & is_private, priority=10, block=True)
+help_message_sent_record: dict[int, int] = {}  # user_id, time
+
+def can_send_help_message(user_id: int) -> bool:
+    if user_id in help_message_sent_record:
+        last_time = help_message_sent_record[user_id]
+        if time.time() - last_time < 60:
+            return False
+
+    help_message_sent_record[user_id] = time.time()
+    return True
+
+# ========= 私聊 =========
+sign_up = on_command("注册账号", rule=to_me() & is_private & not_bot_self, priority=10, block=True)
+reset_password = on_command("重置密码", rule=to_me() & is_private & not_bot_self, priority=10, block=True)
+
+relogin_qzone = on_command("更新cookies", rule=to_me() & is_private & not_bot_self, priority=10, block=True)
 
 any_message = on_regex(r".*", rule=to_me() & is_private, priority=100, block=True)
 
@@ -76,6 +91,8 @@ async def relogin_qzone_func(event: Event):
 
 @any_message.handle()
 async def any_message_func(event: Event):
+    if not can_send_help_message(int(event.get_user_id())):
+        return
     await any_message.finish(nonebot.get_driver().config.campux_help_message)
 
 # ========= 群聊 =========
