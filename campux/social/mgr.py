@@ -65,7 +65,7 @@ class SocialPlatformManager:
                 images_to_post.append(image)
 
             await self.platform_api.publish_emotion(
-                f"#{post_id}",
+                f"#{post_id}"+self.ap.config.campux_publish_text_extra,
                 images_to_post
             )
 
