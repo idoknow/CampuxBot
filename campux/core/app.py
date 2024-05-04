@@ -6,12 +6,14 @@ import threading
 import requests
 import nonebot, nonebot.config
 from nonebot.adapters.onebot.v11 import Adapter as OnebotAdapter  # 避免重复命名
+from nonebot.adapters.onebot.v11 import message
 
 from ..api import api
 from ..mq import redis
 from ..social import mgr as social_mgr
 from ..imbot import mgr as imbot_mgr
 from ..common import cache as cache_mgr
+from ..experimental import agent
 
 
 class Application:
@@ -32,12 +34,22 @@ class Application:
 
     imbot: imbot_mgr.IMBotManager
 
+    ag: agent.ReviewAgent
+
     async def run(self):
 
         def nonebot_thread():
             nonebot.run()
 
         threading.Thread(target=nonebot_thread).start()
+
+        await asyncio.sleep(10)
+
+        result = await self.ag.get_ai_review(
+            await self.cpx_api.get_post_info(108)
+        )
+
+        print(result)
 
 async def create_app() -> Application:
 
@@ -60,4 +72,8 @@ async def create_app() -> Application:
     ap.social = social_mgr.SocialPlatformManager(ap)
     await ap.social.initialize()
     ap.imbot = imbot_mgr.IMBotManager(ap)
+
+    if ap.config.enable_review_agent:
+        ap.ag = agent.ReviewAgent(ap)
+
     return ap

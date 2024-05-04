@@ -113,6 +113,19 @@ class CampuxAPI:
             f"/v1/post/download-image/{image_key}"
         )
     
+    async def save_image_to_file(self, image_key: str, save_dir: str='.') -> str:
+        """/v1/post/download-image/{image-key}
+        
+        GET
+        """
+        image = await self.download_image(image_key)
+
+        whole_path = f"{save_dir}/{image_key}"
+        with open(whole_path, "wb") as f:
+            f.write(image)
+
+        return whole_path
+    
     async def review_post(self, post_id: int, option: str, comment: str):
         """/v1/post/review-post
         
