@@ -65,6 +65,9 @@ class SocialPlatformManager:
 
     async def publish_post(self, post_id: int):
         try:
+            # 强制延迟
+            await asyncio.sleep(self.ap.config.campux_publish_post_time_delay)
+
             post = await self.ap.cpx_api.get_post_info(post_id)
 
             images_to_post = []

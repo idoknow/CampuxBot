@@ -211,7 +211,7 @@ async def resend_post_func(event: Event):
                 await resend_post.finish(f"稿件 #{post_id} 不存在")
             else:
                 nonebot.logger.info(f"正在重发稿件 {post_id}")
-                await ap.social.publish_post(post_id)
+                asyncio.create_task(ap.social.publish_post(post_id))
         else:
             await resend_post.finish(ap.config.campux_review_help_message)
     except Exception as e:

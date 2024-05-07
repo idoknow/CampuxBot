@@ -125,7 +125,7 @@ class RedisStreamMQ:
         post_id = int(message[1][b'post_id'].decode('utf-8'))
 
         if await self.ap.social.can_operate():
-            await self.ap.social.publish_post(post_id)
+            asyncio.create_task(self.ap.social.publish_post(post_id))
             # 确认消息
             await self.redis_client.xack(self.ap.config.campux_redis_publish_post_stream, self.get_instance_identity(), message[0])
         else:
