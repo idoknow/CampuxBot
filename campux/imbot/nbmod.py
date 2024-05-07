@@ -111,7 +111,7 @@ approve_post = on_command("通过", rule=to_me() & is_group & is_review_allow, p
 reject_post = on_command("拒绝", rule=to_me() & is_group & is_review_allow, priority=10, block=True)
 
 # 重发 <id>
-resend_post = on_command("重发", rule=to_me() & is_group & is_review_allow, priority=10, block=True)
+resend_post = on_command("重发", rule=to_me() & is_group, priority=10, block=True)
 
 # 其他命令，发帮助信息
 any_message_group = on_regex(r".*", rule=to_me() & is_group & is_review_allow, priority=100, block=True)
