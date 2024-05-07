@@ -20,6 +20,8 @@ class SocialPlatformManager:
 
     renderer: apirender.IdoknowAPIRender
 
+    invalid_count: int = 0
+
     def __init__(self, ap: app.Application):
         self.ap = ap
         self.platform_api = qzone_api.QzoneAPI(ap)
@@ -37,15 +39,26 @@ class SocialPlatformManager:
     async def schedule_task(self):
         nonebot.logger.info("检查QQ空间cookies是否失效...")
         # 检查cookies是否失效
-        if not await self.platform_api.token_valid() and self.platform_api.cookies != self.current_invalid_cookies:
-            nonebot.logger.info("QQ空间cookies已失效，发送通知。")
+        if self.platform_api.cookies != self.current_invalid_cookies:
 
-            asyncio.create_task(self.ap.imbot.send_private_message(
-                self.ap.config.campux_qq_admin_uin,
-                "QQ空间cookies已失效，请发送 #更新cookies 命令进行重新登录。"
-            ))
+            if not await self.platform_api.token_valid():
 
-            self.current_invalid_cookies = self.platform_api.cookies
+                self.invalid_count += 1
+
+                if self.invalid_count < 3:
+                    nonebot.logger.info("QQ空间cookies已失效，但是未达到3次，不发送通知。")
+                else:
+
+                    nonebot.logger.info("QQ空间cookies已失效，发送通知。")
+
+                    asyncio.create_task(self.ap.imbot.send_private_message(
+                        self.ap.config.campux_qq_admin_uin,
+                        "QQ空间cookies已失效，请发送 #更新cookies 命令进行重新登录。"
+                    ))
+
+                    self.current_invalid_cookies = self.platform_api.cookies
+            else:
+                self.invalid_count = 0
 
     async def can_operate(self) -> bool:
         return await self.platform_api.token_valid()
