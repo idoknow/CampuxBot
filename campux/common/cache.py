@@ -11,7 +11,7 @@ class CacheManager:
 
     file: str
 
-    def __init__(self, file: str="cache.json"):
+    def __init__(self, file: str="data/cache.json"):
         self.data = {}
         self.file = file
 
