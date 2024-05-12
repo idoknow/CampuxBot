@@ -9,6 +9,12 @@ import redis.asyncio as redis
 
 from ..core import app
 
+streams_name = {
+    'campux_redis_publish_post_stream': 'campux_publish_post',
+    'campux_redis_new_post_stream': 'campux_new_post',
+    'campux_redis_post_cancel_stream': 'campux_post_cancel',
+}
+
 
 class RedisStreamMQ:
 
@@ -36,10 +42,7 @@ class RedisStreamMQ:
         # 创建xgroup
         # 检查是否存在同名group
 
-        streams_to_check = [
-            self.ap.config.campux_redis_publish_post_stream,
-            self.ap.config.campux_redis_new_post_stream
-        ]
+        streams_to_check = streams_name.values()
 
         for stream in streams_to_check:
             group_info = await self.redis_client.xinfo_groups(stream)
@@ -60,8 +63,9 @@ class RedisStreamMQ:
         async def routine_loop():
             await asyncio.sleep(10)
             while True:
-                await self.process_stream(self.ap.config.campux_redis_publish_post_stream, self.check_publish_post)
-                await self.process_stream(self.ap.config.campux_redis_new_post_stream, self.check_new_post)
+                await self.process_stream(streams_name['campux_redis_post_cancel_stream'], self.check_post_cancel)
+                await self.process_stream(streams_name['campux_redis_publish_post_stream'], self.check_publish_post)
+                await self.process_stream(streams_name['campux_redis_new_post_stream'], self.check_new_post)
                 await asyncio.sleep(10)
 
         asyncio.create_task(routine_loop())
@@ -127,7 +131,7 @@ class RedisStreamMQ:
         if await self.ap.social.can_operate():
             asyncio.create_task(self.ap.social.publish_post(post_id))
             # 确认消息
-            await self.redis_client.xack(self.ap.config.campux_redis_publish_post_stream, self.get_instance_identity(), message[0])
+            await self.redis_client.xack(streams_name['campux_redis_publish_post_stream'], self.get_instance_identity(), message[0])
         else:
             now = time.time()
 
@@ -147,7 +151,7 @@ class RedisStreamMQ:
 
         await self.ap.imbot.send_new_post_notify(post_id)
 
-        await self.redis_client.xack(self.ap.config.campux_redis_new_post_stream, self.get_instance_identity(), message[0])
+        await self.redis_client.xack(streams_name['campux_redis_new_post_stream'], self.get_instance_identity(), message[0])
 
     async def mark_post_published(self, post_id):
         await self.redis_client.hset(
@@ -155,3 +159,12 @@ class RedisStreamMQ:
             self.get_instance_identity(),
             1
         )
+
+    async def check_post_cancel(self, message: tuple):
+        logger.info(f"处理消息：{message}")
+
+        post_id = int(message[1][b'post_id'].decode('utf-8'))
+
+        await self.ap.imbot.send_post_cancel_notify(post_id)
+
+        await self.redis_client.xack(streams_name['campux_redis_post_cancel_stream'], self.get_instance_identity(), message[0])
