@@ -85,14 +85,12 @@ class IMBotManager:
         self,
         post_id: int
     ):
-        post = await self.ap.cpx_api.get_post_info(post_id)
-
-        logger.info(f"稿件已取消：{post}")
+        logger.info(f"稿件已取消：{post_id}")
 
         if self.ap.config.campux_qq_group_review:
 
             msg = [
-                message.MessageSegment.text(f"稿件已取消: #{post.id}"),
+                message.MessageSegment.text(f"稿件已取消: #{post_id}"),
             ]
             
             asyncio.create_task(self.ap.imbot.send_group_message(
