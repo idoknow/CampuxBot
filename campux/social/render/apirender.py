@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import base64
 
 import aiohttp
 
@@ -94,6 +95,23 @@ jinja_template = """<!DOCTYPE html>
 </script>"""
 
 
+async def get_image_base64(
+    url: str=None,
+    local_path: str=None
+) -> str:
+
+    if url:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as resp:
+                img = await resp.read()
+                return base64.b64encode(img).decode()
+
+    if local_path:
+        with open(local_path, "rb") as f:
+            img = f.read()
+            return base64.b64encode(img).decode()
+
+
 class IdoknowAPIRender:
 
     ap: app.Application
@@ -108,7 +126,6 @@ class IdoknowAPIRender:
         jinja_data = {
             "username": str(post.uin),
             "content": post.text,
-            "user_avatar": f"https://q1.qlogo.cn/g?b=qq&amp;nk={post.uin}&amp;s=640",
             "foot_left_hint": f"{post.uin} 发表于 {time_str}",
             "foot_right_hint": "开发 @RockChinQ | @Soulter",
             "bg_fixed_br": f"https://q1.qlogo.cn/g?b=qq&amp;nk={self.ap.config.campux_qq_bot_uin}&amp;s=640",
@@ -117,8 +134,15 @@ class IdoknowAPIRender:
 
         if post.anon:
             jinja_data["username"] = "匿名"
-            jinja_data["user_avatar"] = "https://avatars.githubusercontent.com/u/10137?v=4"
             jinja_data["foot_left_hint"] = "匿名用户 发表于 " + time_str
+
+            jinja_data["user_avatar"] = "data:image/png;base64," + await get_image_base64(
+                local_path="assets/bag-on-head.png"
+            )
+        else:
+            jinja_data["user_avatar"] = "data:image/png;base64," + await get_image_base64(
+                url=f"https://q1.qlogo.cn/g?b=qq&nk={post.uin}&s=640"
+            )
 
         async with aiohttp.ClientSession() as session:
             async with session.post(
