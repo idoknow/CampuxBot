@@ -85,9 +85,6 @@ class SocialPlatformManager:
                 images_to_post
             )
 
-            # 通知到hash 
-            await self.ap.mq.mark_post_published(post_id)
-
             # 记录log
             await self.ap.cpx_api.post_post_log(
                 post_id,
@@ -96,6 +93,8 @@ class SocialPlatformManager:
                 new_stat="in_queue",
                 comment=f"{self.ap.config.campux_qq_bot_uin} 发表稿件"
             )
+            # 通知到hash 
+            await self.ap.mq.mark_post_published(post_id)
 
             # 通知到群里
             asyncio.create_task(self.ap.imbot.send_group_message(

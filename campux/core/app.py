@@ -32,6 +32,8 @@ class Application:
 
     imbot: imbot_mgr.IMBotManager
 
+    bot_event_loop: asyncio.AbstractEventLoop = None
+
     async def run(self):
 
         def nonebot_thread():
@@ -54,6 +56,8 @@ async def create_app() -> Application:
 
     ap = Application()
     ap.cache = cache
+
+    ap.bot_event_loop = asyncio.get_event_loop()
 
     ap.mq = redis.RedisStreamMQ(ap)
     await ap.mq.initialize()
