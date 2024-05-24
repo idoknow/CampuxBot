@@ -61,6 +61,7 @@ jinja_template = """<!DOCTYPE html>
         }
     </style>
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta charset="UTF-8">
 </head>
 
 <body style="margin: 0">
