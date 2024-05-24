@@ -39,6 +39,13 @@ class RedisStreamMQ:
             password=self.ap.config.campux_redis_password
         )
 
+        # 从config取出各个stream的名字
+        for stream_key in streams_name.keys():
+            if hasattr(self.ap.config, stream_key):
+                streams_name[stream_key] = getattr(self.ap.config, stream_key)
+
+        logger.info(f"Redis Streams: {streams_name}")
+
         # 创建xgroup
         # 检查是否存在同名group
 
