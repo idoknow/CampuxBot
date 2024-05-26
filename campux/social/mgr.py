@@ -102,8 +102,18 @@ class SocialPlatformManager:
                 f"已成功发表：#{post.id}"
             ))
         except Exception as e:
+
             traceback.print_exc()
             asyncio.create_task(self.ap.imbot.send_group_message(
                 self.ap.config.campux_review_qq_group_id,
                 f"发表失败：#{post_id}\n{str(e)}"
             ))
+
+            # 记录log
+            await self.ap.cpx_api.post_post_log(
+                post_id,
+                op=0,
+                old_stat="in_queue",
+                new_stat="in_queue",
+                comment=f"{self.ap.config.campux_qq_bot_uin} 发表失败: {str(e)}"
+            )
