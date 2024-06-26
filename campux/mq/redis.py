@@ -73,7 +73,7 @@ class RedisStreamMQ:
                 await self.process_stream(streams_name['campux_redis_publish_post_stream'], self.check_publish_post)
                 await self.process_stream(streams_name['campux_redis_new_post_stream'], self.check_new_post)
                 await self.process_stream(streams_name['campux_redis_post_cancel_stream'], self.check_post_cancel)
-                await asyncio.sleep(10)
+                await asyncio.sleep(30)
 
         asyncio.create_task(routine_loop())
 
