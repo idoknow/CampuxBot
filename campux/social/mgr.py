@@ -22,6 +22,9 @@ class SocialPlatformManager:
 
     invalid_count: int = 0
 
+    publishing_semaphore: asyncio.Semaphore = asyncio.Semaphore(1)
+    """发布信号量，防止同时发布多个稿件"""
+
     def __init__(self, ap: app.Application):
         self.ap = ap
         self.platform_api = qzone_api.QzoneAPI(ap)
@@ -64,56 +67,71 @@ class SocialPlatformManager:
         return await self.platform_api.token_valid()
 
     async def publish_post(self, post_id: int):
-        try:
-            # 强制延迟
-            await asyncio.sleep(self.ap.config.campux_publish_post_time_delay)
+        # 强制延迟
+        await asyncio.sleep(self.ap.config.campux_publish_post_time_delay)
 
-            post = await self.ap.cpx_api.get_post_info(post_id)
+        max_retry = 3
 
-            images_to_post = []
+        async with self.publishing_semaphore:
+            for i in range(max_retry):
+                try:
+                    await self._publish_post(post_id)
+                    asyncio.create_task(self.ap.imbot.send_group_message(
+                        self.ap.config.campux_review_qq_group_id,
+                        f"已成功发表：#{post_id}"
+                    ))
+                    return
+                except Exception as e:
+                    nonebot.logger.error(f"发表稿件失败：{str(e)}")
 
-            images_to_post.append(
-                await self.renderer.render(post)
-            )
+                    await self.ap.cpx_api.post_post_log(
+                        post_id,
+                        op=0,
+                        old_stat="in_queue",
+                        new_stat="in_queue",
+                        comment=f"{self.ap.config.campux_qq_bot_uin} 发表失败({i}): {str(e)}"
+                    )
 
-            for image_key in post.images:
-                image = await self.ap.cpx_api.download_image(image_key)
-                images_to_post.append(image)
+                    if i == max_retry - 1:
+                        asyncio.create_task(self.ap.imbot.send_group_message(
+                            self.ap.config.campux_review_qq_group_id,
+                            f"发表失败：#{post_id}\n{str(e)}"
+                        ))
+                    else:
+                        await asyncio.sleep(5)
 
-            await self.platform_api.publish_emotion(
-                f"#{post_id}"+self.ap.config.campux_publish_text_extra,
-                images_to_post
-            )
+    async def _publish_post(self, post_id: int):
 
-            # 记录log
-            await self.ap.cpx_api.post_post_log(
-                post_id,
-                op=0,
-                old_stat="in_queue",
-                new_stat="in_queue",
-                comment=f"{self.ap.config.campux_qq_bot_uin} 发表稿件"
-            )
-            # 通知到hash 
-            await self.ap.mq.mark_post_published(post_id)
+        post = await self.ap.cpx_api.get_post_info(post_id)
 
-            # 通知到群里
-            asyncio.create_task(self.ap.imbot.send_group_message(
-                self.ap.config.campux_review_qq_group_id,
-                f"已成功发表：#{post.id}"
-            ))
-        except Exception as e:
+        images_to_post = []
 
-            traceback.print_exc()
-            asyncio.create_task(self.ap.imbot.send_group_message(
-                self.ap.config.campux_review_qq_group_id,
-                f"发表失败：#{post_id}\n{str(e)}"
-            ))
+        images_to_post.append(
+            await self.renderer.render(post)
+        )
 
-            # 记录log
-            await self.ap.cpx_api.post_post_log(
-                post_id,
-                op=0,
-                old_stat="in_queue",
-                new_stat="in_queue",
-                comment=f"{self.ap.config.campux_qq_bot_uin} 发表失败: {str(e)}"
-            )
+        for image_key in post.images:
+            image = await self.ap.cpx_api.download_image(image_key)
+            images_to_post.append(image)
+
+        await self.platform_api.publish_emotion(
+            f"#{post_id}"+self.ap.config.campux_publish_text_extra,
+            images_to_post
+        )
+
+        # 记录log
+        await self.ap.cpx_api.post_post_log(
+            post_id,
+            op=0,
+            old_stat="in_queue",
+            new_stat="in_queue",
+            comment=f"{self.ap.config.campux_qq_bot_uin} 发表稿件"
+        )
+        # 通知到hash 
+        await self.ap.mq.mark_post_published(post_id)
+
+        # 通知到群里
+        asyncio.create_task(self.ap.imbot.send_group_message(
+            self.ap.config.campux_review_qq_group_id,
+            f"已成功发表：#{post.id}"
+        ))
