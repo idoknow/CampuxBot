@@ -15,6 +15,9 @@ streams_name = {
     'campux_redis_post_cancel_stream': 'campux_post_cancel',
 }
 
+hash_table_name = {
+    'campux_redis_post_publish_status_hash': 'campux_post_publish_status'
+}
 
 class RedisStreamMQ:
 
@@ -44,7 +47,13 @@ class RedisStreamMQ:
             if hasattr(self.ap.config, stream_key):
                 streams_name[stream_key] = getattr(self.ap.config, stream_key)
 
+        # 从config取出hash table的名称
+        for hash_table_key in hash_table_name.keys():
+            if hasattr(self.ap.config, hash_table_key):
+                hash_table_name[hash_table_key] = getattr(self.ap.config, hash_table_key)
+
         logger.info(f"Redis Streams: {streams_name}")
+        logger.info(f"Redis Hash Tables: {hash_table_name}")
 
         # 创建xgroup
         # 检查是否存在同名group
@@ -162,7 +171,7 @@ class RedisStreamMQ:
 
     async def mark_post_published(self, post_id):
         await self.redis_client.hset(
-            f"publish_post_status:{post_id}",
+            f"{hash_table_name['campux_redis_post_publish_status_hash']}{post_id}",
             self.get_instance_identity(),
             1
         )
