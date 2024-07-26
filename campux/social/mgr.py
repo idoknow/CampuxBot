@@ -8,6 +8,7 @@ import nonebot
 from ..core import app
 from .qzone import api as qzone_api
 from .render import apirender
+from . import preproc
 
 
 class SocialPlatformManager:
@@ -22,6 +23,8 @@ class SocialPlatformManager:
 
     invalid_count: int = 0
 
+    preprocessor: preproc.PostPreprocessor
+
     publishing_semaphore: asyncio.Semaphore = asyncio.Semaphore(1)
     """发布信号量，防止同时发布多个稿件"""
 
@@ -29,6 +32,7 @@ class SocialPlatformManager:
         self.ap = ap
         self.platform_api = qzone_api.QzoneAPI(ap)
         self.renderer = apirender.IdoknowAPIRender(ap)
+        self.preprocessor = preproc.PostPreprocessor(ap)
     
     async def initialize(self):
         async def schedule_loop():
@@ -104,6 +108,8 @@ class SocialPlatformManager:
 
         post = await self.ap.cpx_api.get_post_info(post_id)
 
+        post = await self.preprocessor.preprocess_post(post)
+
         images_to_post = []
 
         images_to_post.append(
@@ -115,7 +121,7 @@ class SocialPlatformManager:
             images_to_post.append(image)
 
         tid = await self.platform_api.publish_emotion(
-            f"#{post_id}"+self.ap.config.campux_publish_text_extra,
+            post.extra_text,
             images_to_post
         )
 

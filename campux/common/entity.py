@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import typing
+
 import pydantic
 
 
@@ -44,3 +46,6 @@ class Post(pydantic.BaseModel):
 
     time_stamp: int
     """时间戳"""
+
+    extra_text: typing.Optional[str] = None
+    """额外文本"""
