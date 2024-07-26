@@ -114,7 +114,7 @@ class SocialPlatformManager:
             image = await self.ap.cpx_api.download_image(image_key)
             images_to_post.append(image)
 
-        await self.platform_api.publish_emotion(
+        tid = await self.platform_api.publish_emotion(
             f"#{post_id}"+self.ap.config.campux_publish_text_extra,
             images_to_post
         )
@@ -127,6 +127,16 @@ class SocialPlatformManager:
             new_stat="in_queue",
             comment=f"{self.ap.config.campux_qq_bot_uin} 发表稿件"
         )
+
+        # 提交post verbose
+        await self.ap.cpx_api.submit_post_verbose(
+            post_id,
+            key=str(self.platform_api.get_account_id()),
+            values={
+                "tid": tid
+            }
+        )
+
         # 通知到hash 
         await self.ap.mq.mark_post_published(post_id)
 

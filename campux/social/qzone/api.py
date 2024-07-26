@@ -55,6 +55,9 @@ class QzoneAPI:
 
     uin: int
 
+    def get_account_id(self) -> int:
+        return self.uin
+
     async def do(
         self,
         method: str,

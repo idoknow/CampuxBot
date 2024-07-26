@@ -163,6 +163,33 @@ class CampuxAPI:
                 "comment": comment
             }
         )
+
+    async def submit_post_verbose(
+        self,
+        post_id: int,
+        key: str,
+        values: dict
+    ):
+        """POST /v1/post/submit-verbose
+        
+        {
+            "post_id": 1,
+            "key": "2297454589",
+            "values": {
+                "tid": "123456789"
+            }
+        }
+        """
+
+        return await self.data(
+            "POST",
+            "/v1/post/submit-verbose",
+            body={
+                "post_id": post_id,
+                "key": key,
+                "values": values
+            }
+        )
         
 campux_api = None
 
