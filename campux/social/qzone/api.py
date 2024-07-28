@@ -101,6 +101,10 @@ class QzoneAPI:
 
         for i in range(retry):
             try:
+                # 尝试从缓存加载cookies
+                self.ap.cache.load()
+                self.cookies = self.ap.cache.data['qzone_cookies']
+
                 today, total = await self.get_visitor_amount()
                 return True
             except Exception as e:
