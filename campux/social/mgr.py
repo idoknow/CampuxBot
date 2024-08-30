@@ -86,7 +86,7 @@ class SocialPlatformManager:
                     ))
                     return
                 except Exception as e:
-                    nonebot.logger.error(f"发表稿件失败：{str(e)}")
+                    nonebot.logger.error(f"发表稿件失败：{traceback.format_exc()}")
 
                     await self.ap.cpx_api.post_post_log(
                         post_id,

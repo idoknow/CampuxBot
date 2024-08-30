@@ -31,6 +31,8 @@ class Application:
     
     mq: redis.RedisStreamMQ
 
+    redis_name_proxy: redis.RedisNameProxy
+
     social: social_mgr.SocialPlatformManager
 
     imbot: imbot_mgr.IMBotManager
@@ -71,6 +73,7 @@ async def create_app() -> Application:
 
     ap.bot_event_loop = asyncio.get_event_loop()
 
+    ap.redis_name_proxy = redis.RedisNameProxy(ap)
     ap.mq = redis.RedisStreamMQ(ap)
     await ap.mq.initialize()
     ap.social = social_mgr.SocialPlatformManager(ap)
