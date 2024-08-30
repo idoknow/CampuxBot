@@ -19,19 +19,19 @@ class RedisNameProxy:
 
     @property
     def campux_redis_publish_post_stream(self):
-        return f"{self.ap.config.campux_domain}.publish_post"
+        return f"{self.ap.config.data['campux_domain']}.publish_post"
 
     @property
     def campux_redis_new_post_stream(self):
-        return f"{self.ap.config.campux_domain}.new_post"
+        return f"{self.ap.config.data['campux_domain']}.new_post"
     
     @property
     def campux_redis_post_cancel_stream(self):
-        return f"{self.ap.config.campux_domain}.post_cancel"
+        return f"{self.ap.config.data['campux_domain']}.post_cancel"
 
     @property
     def campux_redis_post_publish_status_hash(self):
-        return f"{self.ap.config.campux_domain}.post_publish_status"
+        return f"{self.ap.config.data['campux_domain']}.post_publish_status"
 
 class RedisStreamMQ:
 
@@ -46,14 +46,14 @@ class RedisStreamMQ:
         self.relogin_notify_times = []
 
     def get_instance_identity(self) -> str:
-        return f"campuxbot_{self.ap.config.campux_qq_bot_uin}"
+        return f"campuxbot_{self.ap.config.data['campux_qq_bot_uin']}"
 
     async def initialize(self):
         self.redis_client = redis.Redis(
-            host=self.ap.config.campux_redis_host,
-            port=self.ap.config.campux_redis_port,
+            host=self.ap.config.data['campux_redis_host'],
+            port=self.ap.config.data['campux_redis_port'],
             db=0,
-            password=self.ap.config.campux_redis_password
+            password=self.ap.config.data['campux_redis_password']
         )
         # 创建xgroup
         # 检查是否存在同名group
@@ -128,7 +128,7 @@ class RedisStreamMQ:
             else:
                 streams = await self.redis_client.xreadgroup(
                     groupname=self.get_instance_identity(),
-                    consumername=self.ap.config.campux_qq_bot_uin,
+                    consumername=self.ap.config.data['campux_qq_bot_uin'],
                     streams={stream: '>'},
                     count=1,
                     block=5000
@@ -158,7 +158,7 @@ class RedisStreamMQ:
             if len(self.relogin_notify_times) == 0 or now - self.relogin_notify_times[-1] > 120*60:
                 self.relogin_notify_times.append(now)
                 asyncio.create_task(self.ap.imbot.send_private_message(
-                    self.ap.config.campux_qq_admin_uin,
+                    self.ap.config.data['campux_qq_admin_uin'],
                     "空间cookies失效，当前有稿件待发布，请尽快更新cookies。"
                 ))
 

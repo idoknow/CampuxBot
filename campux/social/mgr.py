@@ -59,7 +59,7 @@ class SocialPlatformManager:
                     nonebot.logger.info("QQ空间cookies已失效，发送通知。")
 
                     asyncio.create_task(self.ap.imbot.send_private_message(
-                        self.ap.config.campux_qq_admin_uin,
+                        self.ap.config.data['campux_qq_admin_uin'],
                         "QQ空间cookies已失效，请发送 #更新cookies 命令进行重新登录。"
                     ))
 
@@ -72,7 +72,7 @@ class SocialPlatformManager:
 
     async def publish_post(self, post_id: int):
         # 强制延迟
-        await asyncio.sleep(self.ap.config.campux_publish_post_time_delay)
+        await asyncio.sleep(self.ap.config.data['campux_publish_post_time_delay'])
 
         max_retry = 3
 
@@ -81,7 +81,7 @@ class SocialPlatformManager:
                 try:
                     await self._publish_post(post_id)
                     asyncio.create_task(self.ap.imbot.send_group_message(
-                        self.ap.config.campux_review_qq_group_id,
+                        self.ap.config.data['campux_review_qq_group_id'],
                         f"已成功发表：#{post_id}"
                     ))
                     return
@@ -93,12 +93,12 @@ class SocialPlatformManager:
                         op=0,
                         old_stat="in_queue",
                         new_stat="in_queue",
-                        comment=f"{self.ap.config.campux_qq_bot_uin} 发表失败({i}): {str(e)}"
+                        comment=f"{self.ap.config.data['campux_qq_bot_uin']} 发表失败({i}): {str(e)}"
                     )
 
                     if i == max_retry - 1:
                         asyncio.create_task(self.ap.imbot.send_group_message(
-                            self.ap.config.campux_review_qq_group_id,
+                            self.ap.config.data['campux_review_qq_group_id'],
                             f"发表失败：#{post_id}\n{str(e)}"
                         ))
                     else:
@@ -131,7 +131,7 @@ class SocialPlatformManager:
             op=0,
             old_stat="in_queue",
             new_stat="in_queue",
-            comment=f"{self.ap.config.campux_qq_bot_uin} 发表稿件"
+            comment=f"{self.ap.config.data['campux_qq_bot_uin']} 发表稿件"
         )
 
         # 提交post verbose

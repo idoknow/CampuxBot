@@ -20,15 +20,11 @@ class Application:
     cache: cache_mgr.CacheManager
 
     meta: config_mgr.ConfigManager
-    
-    @property
-    def cpx_api(self) -> api.CampuxAPI:
-        return api.campux_api
 
-    @property
-    def config(self) -> nonebot.config.Config:
-        return nonebot.get_driver().config
+    config: config_mgr.ConfigManager
     
+    cpx_api: api.CampuxAPI
+
     mq: redis.RedisStreamMQ
 
     redis_name_proxy: redis.RedisNameProxy
@@ -48,20 +44,23 @@ class Application:
 
 async def create_app() -> Application:
 
-    # 注册适配器
-    driver = nonebot.get_driver()
-    driver.register_adapter(OnebotAdapter)
-
-    # 在这里加载插件
-    nonebot.load_plugin("campux.imbot.nbmod")  # 本地插件
-
     # 元数据
-    meta = await config_mgr.load_json_config("data/metadata.json", template_data={
-        "post_publish_text": "'#' + str(post_id)",
-    })
+    meta = await config_mgr.load_json_config(
+        "data/metadata.json",
+        template_name="templates/metadata.json"
+    )
 
     await meta.load_config()
     await meta.dump_config()
+
+    # 配置文件
+    config = await config_mgr.load_json_config(
+        "data/config.json",
+        template_name="templates/config.json"
+    )
+
+    await config.load_config()
+    await config.dump_config()
 
     # 缓存管理器
     cache = cache_mgr.CacheManager()
@@ -70,6 +69,22 @@ async def create_app() -> Application:
     ap = Application()
     ap.cache = cache
     ap.meta = meta
+    ap.config = config
+
+    cpx_api = api.CampuxAPI(ap=ap)
+
+    import nonebot
+    # 初始化 NoneBot
+    nonebot.init(
+        **config.data
+    )
+
+    # 注册适配器
+    driver = nonebot.get_driver()
+    driver.register_adapter(OnebotAdapter)
+
+    # 在这里加载插件
+    nonebot.load_plugin("campux.imbot.nbmod")  # 本地插件
 
     ap.bot_event_loop = asyncio.get_event_loop()
 

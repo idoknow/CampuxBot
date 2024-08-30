@@ -1,0 +1,20 @@
+{
+    "host": "0.0.0.0",
+    "port": 8282,
+    "command_start": ["#", "＃"],
+    "command_sep": ["."],
+    "campux_api": "http://campux:8080",
+    "campux_token": "campux123456",
+    "campux_redis_host": "redis",
+    "campux_redis_port": 6379,
+    "campux_redis_password": "",
+    "campux_help_message": "填写未匹配指令时的帮助信息。每用户每60秒只会响应一次。",
+    "campux_review_help_message": "填写未匹配指令时的审核帮助信息",
+    "campux_review_qq_group_id": 123456789,
+    "campux_qq_group_review": true,
+    "campux_text_to_image_api": "http://campuxutility:8999/text2img",
+    "campux_publish_post_time_delay": 0,
+    "campux_domain": "campux",
+    "campux_qq_bot_uin": 123456789,
+    "campux_qq_admin_uin": 234567890
+}
