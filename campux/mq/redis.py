@@ -175,7 +175,7 @@ class RedisStreamMQ:
 
     async def mark_post_published(self, post_id):
         await self.redis_client.hset(
-            f"{self.ap.redis_name_proxy.campux_redis_post_publish_status_hash}{post_id}",
+            f"{self.ap.redis_name_proxy.campux_redis_post_publish_status_hash}:{post_id}",
             self.get_instance_identity(),
             1
         )
