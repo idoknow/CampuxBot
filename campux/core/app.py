@@ -72,6 +72,7 @@ async def create_app() -> Application:
     ap.config = config
 
     cpx_api = api.CampuxAPI(ap=ap)
+    ap.cpx_api = cpx_api
 
     import nonebot
     # 初始化 NoneBot
