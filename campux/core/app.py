@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import threading
+import os
 
 import requests
 import nonebot, nonebot.config
@@ -42,6 +43,26 @@ class Application:
 
         threading.Thread(target=nonebot_thread).start()
 
+def convert_env_var(
+    env_var: str,
+    value_type: type
+) -> any:
+    print(env_var)
+    if value_type == int:
+        return int(env_var)
+    elif value_type == str:
+        return str(env_var)
+    elif value_type == bool:
+        if env_var == 'true':
+            env_var = 'True'
+        elif env_var == 'false':
+            env_var = 'False'
+        return eval(env_var)
+    elif value_type == list:
+        return list(eval(env_var))
+    elif value_type == dict:
+        return dict(eval(env_var))
+
 async def create_app() -> Application:
 
     # 元数据
@@ -60,6 +81,20 @@ async def create_app() -> Application:
     )
 
     await config.load_config()
+
+    # 读取环境变量进行替换, for config
+    config_data = config.data.copy()
+
+    # 读取环境变量进行替换, for config
+    for key in config_data:
+        env_value = os.environ.get(key)
+
+        if env_value is None:
+            env_value = os.environ.get(key.upper())
+
+        if env_value is not None:
+            config.data[key] = convert_env_var(env_value, value_type=type(config.data[key]))
+
     await config.dump_config()
 
     # 缓存管理器
