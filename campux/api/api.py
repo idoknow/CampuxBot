@@ -1,16 +1,19 @@
+from __future__ import annotations
+
 import aiohttp
 import nonebot
 
 from . import errors
 from ..common import entity
-
-
-config = nonebot.get_driver().config
+from ..core import app
 
 
 class CampuxAPI:
-    def __init__(self):
-        pass
+
+    ap: app.Application
+
+    def __init__(self, ap: app.Application):
+        self.ap = ap
 
     async def data(
         self,
@@ -22,10 +25,10 @@ class CampuxAPI:
         async with aiohttp.ClientSession() as session:
             async with session.request(
                 method,
-                f"{config.campux_api}{path}",
+                f"{self.ap.config.data['campux_api']}{path}",
                 params=params,
                 json=body,
-                headers={"Authorization": f"Bearer {config.campux_token}"}
+                headers={"Authorization": f"Bearer {self.ap.config.data['campux_token']}"}
             ) as resp:
                 return await self.assert_data(resp)
 
@@ -39,10 +42,10 @@ class CampuxAPI:
         async with aiohttp.ClientSession() as session:
             async with session.request(
                 method,
-                f"{config.campux_api}{path}",
+                f"{self.ap.config.data['campux_api']}{path}",
                 params=params,
                 json=body,
-                headers={"Authorization": f"Bearer {config.campux_token}"}
+                headers={"Authorization": f"Bearer {self.ap.config.data['campux_token']}"}
             ) as resp:
                 return await resp.read()
 
@@ -190,8 +193,3 @@ class CampuxAPI:
                 "values": values
             }
         )
-        
-campux_api = None
-
-if campux_api is None:
-    campux_api = CampuxAPI()

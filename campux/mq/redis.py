@@ -9,15 +9,29 @@ import redis.asyncio as redis
 
 from ..core import app
 
-streams_name = {
-    'campux_redis_publish_post_stream': 'campux_publish_post',
-    'campux_redis_new_post_stream': 'campux_new_post',
-    'campux_redis_post_cancel_stream': 'campux_post_cancel',
-}
 
-hash_table_name = {
-    'campux_redis_post_publish_status_hash': 'campux_post_publish_status'
-}
+class RedisNameProxy:
+
+    ap: app.Application
+
+    def __init__(self, ap: app.Application):
+        self.ap = ap
+
+    @property
+    def campux_redis_publish_post_stream(self):
+        return f"{self.ap.config.data['campux_domain']}.publish_post"
+
+    @property
+    def campux_redis_new_post_stream(self):
+        return f"{self.ap.config.data['campux_domain']}.new_post"
+    
+    @property
+    def campux_redis_post_cancel_stream(self):
+        return f"{self.ap.config.data['campux_domain']}.post_cancel"
+
+    @property
+    def campux_redis_post_publish_status_hash(self):
+        return f"{self.ap.config.data['campux_domain']}.post_publish_status"
 
 class RedisStreamMQ:
 
@@ -32,33 +46,23 @@ class RedisStreamMQ:
         self.relogin_notify_times = []
 
     def get_instance_identity(self) -> str:
-        return f"campuxbot_{self.ap.config.campux_qq_bot_uin}"
+        return f"campuxbot_{self.ap.config.data['campux_qq_bot_uin']}"
 
     async def initialize(self):
         self.redis_client = redis.Redis(
-            host=self.ap.config.campux_redis_host,
-            port=self.ap.config.campux_redis_port,
+            host=self.ap.config.data['campux_redis_host'],
+            port=self.ap.config.data['campux_redis_port'],
             db=0,
-            password=self.ap.config.campux_redis_password
+            password=self.ap.config.data['campux_redis_password']
         )
-
-        # 从config取出各个stream的名字
-        for stream_key in streams_name.keys():
-            if hasattr(self.ap.config, stream_key):
-                streams_name[stream_key] = getattr(self.ap.config, stream_key)
-
-        # 从config取出hash table的名称
-        for hash_table_key in hash_table_name.keys():
-            if hasattr(self.ap.config, hash_table_key):
-                hash_table_name[hash_table_key] = getattr(self.ap.config, hash_table_key)
-
-        logger.info(f"Redis Streams: {streams_name}")
-        logger.info(f"Redis Hash Tables: {hash_table_name}")
-
         # 创建xgroup
         # 检查是否存在同名group
 
-        streams_to_check = streams_name.values()
+        streams_to_check = [
+            self.ap.redis_name_proxy.campux_redis_publish_post_stream,
+            self.ap.redis_name_proxy.campux_redis_new_post_stream,
+            self.ap.redis_name_proxy.campux_redis_post_cancel_stream,
+        ]
 
         for stream in streams_to_check:
             group_info = await self.redis_client.xinfo_groups(stream)
@@ -79,9 +83,9 @@ class RedisStreamMQ:
         async def routine_loop():
             await asyncio.sleep(10)
             while True:
-                await self.process_stream(streams_name['campux_redis_publish_post_stream'], self.check_publish_post)
-                await self.process_stream(streams_name['campux_redis_new_post_stream'], self.check_new_post)
-                await self.process_stream(streams_name['campux_redis_post_cancel_stream'], self.check_post_cancel)
+                await self.process_stream(self.ap.redis_name_proxy.campux_redis_publish_post_stream, self.check_publish_post)
+                await self.process_stream(self.ap.redis_name_proxy.campux_redis_new_post_stream, self.check_new_post)
+                await self.process_stream(self.ap.redis_name_proxy.campux_redis_post_cancel_stream, self.check_post_cancel)
                 await asyncio.sleep(30)
 
         asyncio.create_task(routine_loop())
@@ -124,7 +128,7 @@ class RedisStreamMQ:
             else:
                 streams = await self.redis_client.xreadgroup(
                     groupname=self.get_instance_identity(),
-                    consumername=self.ap.config.campux_qq_bot_uin,
+                    consumername=self.ap.config.data['campux_qq_bot_uin'],
                     streams={stream: '>'},
                     count=1,
                     block=5000
@@ -147,14 +151,14 @@ class RedisStreamMQ:
         if await self.ap.social.can_operate():
             asyncio.create_task(self.ap.social.publish_post(post_id))
             # 确认消息
-            await self.redis_client.xack(streams_name['campux_redis_publish_post_stream'], self.get_instance_identity(), message[0])
+            await self.redis_client.xack(self.ap.redis_name_proxy.campux_redis_publish_post_stream, self.get_instance_identity(), message[0])
         else:
             now = time.time()
 
             if len(self.relogin_notify_times) == 0 or now - self.relogin_notify_times[-1] > 120*60:
                 self.relogin_notify_times.append(now)
                 asyncio.create_task(self.ap.imbot.send_private_message(
-                    self.ap.config.campux_qq_admin_uin,
+                    self.ap.config.data['campux_qq_admin_uin'],
                     "空间cookies失效，当前有稿件待发布，请尽快更新cookies。"
                 ))
 
@@ -167,11 +171,11 @@ class RedisStreamMQ:
 
         await self.ap.imbot.send_new_post_notify(post_id)
 
-        await self.redis_client.xack(streams_name['campux_redis_new_post_stream'], self.get_instance_identity(), message[0])
+        await self.redis_client.xack(self.ap.redis_name_proxy.campux_redis_new_post_stream, self.get_instance_identity(), message[0])
 
     async def mark_post_published(self, post_id):
         await self.redis_client.hset(
-            f"{hash_table_name['campux_redis_post_publish_status_hash']}{post_id}",
+            f"{self.ap.redis_name_proxy.campux_redis_post_publish_status_hash}:{post_id}",
             self.get_instance_identity(),
             1
         )
@@ -183,4 +187,4 @@ class RedisStreamMQ:
 
         await self.ap.imbot.send_post_cancel_notify(post_id)
 
-        await self.redis_client.xack(streams_name['campux_redis_post_cancel_stream'], self.get_instance_identity(), message[0])
+        await self.redis_client.xack(self.ap.redis_name_proxy.campux_redis_post_cancel_stream, self.get_instance_identity(), message[0])

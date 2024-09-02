@@ -129,7 +129,7 @@ class IdoknowAPIRender:
             "content": post.text,
             "foot_left_hint": f"{post.uin} 发表于 {time_str}",
             "foot_right_hint": "开发 @RockChinQ | @Soulter",
-            "bg_fixed_br": f"https://q1.qlogo.cn/g?b=qq&amp;nk={self.ap.config.campux_qq_bot_uin}&amp;s=640",
+            "bg_fixed_br": f"https://q1.qlogo.cn/g?b=qq&amp;nk={self.ap.config.data['campux_qq_bot_uin']}&amp;s=640",
             "banner": "",
         }
 
@@ -147,7 +147,7 @@ class IdoknowAPIRender:
 
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                self.ap.config.campux_text_to_image_api+"/generate",
+                self.ap.config.data['campux_text_to_image_api']+"/generate",
                 json={
                     "tmpl": jinja_template,
                     "tmpldata": jinja_data,
@@ -160,7 +160,7 @@ class IdoknowAPIRender:
                 resp_json = await resp.json()
 
                 img = await session.get(
-                    self.ap.config.campux_text_to_image_api+"/"+resp_json['data']['id']
+                    self.ap.config.data['campux_text_to_image_api']+"/"+resp_json['data']['id']
                 )
 
                 return await img.read()

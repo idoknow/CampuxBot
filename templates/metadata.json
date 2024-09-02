@@ -1,0 +1,3 @@
+{
+    "post_publish_text": "'#' + str(post_id)"
+}

@@ -1,9 +1,6 @@
 import asyncio
 import os
 
-import nonebot
-# 初始化 NoneBot
-nonebot.init()
 
 from campux.core import app
 
