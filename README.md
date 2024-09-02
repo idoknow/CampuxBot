@@ -8,8 +8,7 @@
 
 > python >= 3.9
 
-先部署 [Campux](https://github.com/RockChinQ/Campux)。  
-把`.env.example`复制一份到`.env`，然后填写相关配置。
+先部署 [Campux](https://github.com/RockChinQ/Campux)。 
 
 ```shell
 pip install -r requirements.txt
