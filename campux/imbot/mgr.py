@@ -56,7 +56,7 @@ class IMBotManager:
 
         logger.info(f"新稿件：{post}")
 
-        if self.ap.config.campux_qq_group_review:
+        if self.ap.config.data['campux_qq_group_review']:
 
             # 获取所有图片
             images = [
@@ -77,7 +77,7 @@ class IMBotManager:
                 )
             
             asyncio.create_task(self.ap.imbot.send_group_message(
-                self.ap.config.campux_review_qq_group_id,
+                self.ap.config.data['campux_review_qq_group_id'],
                 msg
             ))
 
@@ -87,13 +87,13 @@ class IMBotManager:
     ):
         logger.info(f"稿件已取消：{post_id}")
 
-        if self.ap.config.campux_qq_group_review:
+        if self.ap.config.data['campux_qq_group_review']:
 
             msg = [
                 message.MessageSegment.text(f"稿件已取消: #{post_id}"),
             ]
             
             asyncio.create_task(self.ap.imbot.send_group_message(
-                self.ap.config.campux_review_qq_group_id,
+                self.ap.config.data['campux_review_qq_group_id'],
                 msg
             ))

@@ -20,7 +20,7 @@ async def is_private(event: Event):
     return type(event) == ob11_event.PrivateMessageEvent
 
 async def not_bot_self(event: Event):
-    return int(event.get_user_id()) != ap.config.campux_qq_bot_uin
+    return int(event.get_user_id()) != ap.config.data['campux_qq_bot_uin']
 
 help_message_sent_record: dict[int, int] = {}  # user_id, time
 
@@ -77,13 +77,13 @@ async def reset_password_func(event: Event):
 async def relogin_qzone_func(event: Event):
     user_id = int(event.get_user_id())
 
-    if user_id != ap.config.campux_qq_admin_uin:
+    if user_id != ap.config.data['campux_qq_admin_uin']:
         await relogin_qzone.finish("无权限")
         return
 
     async def qrcode_callback(content: bytes):
         asyncio.create_task(ap.imbot.send_private_message(
-            ap.config.campux_qq_admin_uin,
+            ap.config.data['campux_qq_admin_uin'],
             message=[
                 message.MessageSegment.text("请使用QQ扫描以下二维码以登录QQ空间："),
                 message.MessageSegment.image(content)
@@ -117,7 +117,7 @@ async def is_group(event: Event):
 async def is_review_allow(event: Event):
     if type(event) == ob11_event.PrivateMessageEvent:
         return False
-    return ap.config.campux_qq_group_review and int(event.group_id) == int(ap.config.campux_review_qq_group_id)
+    return ap.config.data['campux_qq_group_review'] and int(event.group_id) == int(ap.config.data['campux_review_qq_group_id'])
 
 # #通过 [id]
 approve_post = on_command("通过", rule=to_me() & is_group & is_review_allow, priority=10, block=True)
@@ -164,7 +164,7 @@ async def approve_post_func(event: Event):
                 else:
                     await approve_post.finish(f"稿件 #{post_id} 状态不是待审核")
         else:
-            await approve_post.finish(ap.config.campux_review_help_message)
+            await approve_post.finish(ap.config.data['campux_review_help_message'])
     except Exception as e:
         if isinstance(e, nonebot.exception.FinishedException):
             return
@@ -203,7 +203,7 @@ async def reject_post_func(event: Event):
                 else:
                     await reject_post.finish(f"稿件 #{post_id} 状态不是待审核")
         else:
-            await reject_post.finish(ap.config.campux_review_help_message)
+            await reject_post.finish(ap.config.data['campux_review_help_message'])
     except Exception as e:
         if isinstance(e, nonebot.exception.FinishedException):
             return
@@ -229,7 +229,7 @@ async def resend_post_func(event: Event):
                 # 添加到ap.bot_event_loop中
                 ap.bot_event_loop.create_task(ap.social.publish_post(post_id))
         else:
-            await resend_post.finish(ap.config.campux_review_help_message)
+            await resend_post.finish(ap.config.data['campux_review_help_message'])
     except Exception as e:
         if isinstance(e, nonebot.exception.FinishedException):
             return
@@ -238,4 +238,4 @@ async def resend_post_func(event: Event):
 
 @any_message_group.handle()
 async def any_message_group_func(event: Event):
-    await any_message_group.finish(ap.config.campux_review_help_message)
+    await any_message_group.finish(ap.config.data['campux_review_help_message'])
