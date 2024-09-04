@@ -48,7 +48,7 @@ any_message = on_regex(r".*", rule=to_me() & is_private, priority=100, block=Tru
 async def sign_up_func(event: Event):
 
     try:
-        pwd = await api.campux_api.sign_up(uin=int(event.get_user_id()))
+        pwd = await ap.cpx_api.sign_up(uin=int(event.get_user_id()))
 
         await fdelay()
 
@@ -62,7 +62,7 @@ async def sign_up_func(event: Event):
 @reset_password.handle()
 async def reset_password_func(event: Event):
     try:
-        pwd = await api.campux_api.reset_password(uin=int(event.get_user_id()))
+        pwd = await ap.cpx_api.reset_password(uin=int(event.get_user_id()))
 
         await fdelay()
 
@@ -143,7 +143,7 @@ async def approve_post_func(event: Event):
             post_id = int(params[0])
             comment = ""
 
-            post = await api.campux_api.get_post_info(post_id)
+            post = await ap.cpx_api.get_post_info(post_id)
 
             if post is None:
                 await approve_post.finish(f"稿件 #{post_id} 不存在")
@@ -182,7 +182,7 @@ async def reject_post_func(event: Event):
             post_id = int(params[-1])
             comment = " ".join(params[:-1])
 
-            post = await api.campux_api.get_post_info(post_id)
+            post = await ap.cpx_api.get_post_info(post_id)
 
             if post is None:
                 await reject_post.finish(f"稿件 #{post_id} 不存在")
@@ -220,7 +220,7 @@ async def resend_post_func(event: Event):
         if len(params) == 1:
             post_id = int(params[0])
 
-            post = await api.campux_api.get_post_info(post_id)
+            post = await ap.cpx_api.get_post_info(post_id)
 
             if post is None:
                 await resend_post.finish(f"稿件 #{post_id} 不存在")
