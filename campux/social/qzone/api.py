@@ -128,11 +128,6 @@ class QzoneAPI:
         if 'uin' in self.cookies:
             self.uin = int(self.cookies['uin'][1:])
 
-        asyncio.create_task(self.ap.imbot.send_private_message(
-            self.ap.config.data['campux_qq_admin_uin'],
-            "登录流程完成。"
-        ))
-
         self.ap.cache.data['qzone_cookies'] = self.cookies
         self.ap.cache.save()
 

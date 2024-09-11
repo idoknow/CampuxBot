@@ -157,9 +157,9 @@ class RedisStreamMQ:
 
             if len(self.relogin_notify_times) == 0 or now - self.relogin_notify_times[-1] > 120*60:
                 self.relogin_notify_times.append(now)
-                asyncio.create_task(self.ap.imbot.send_private_message(
-                    self.ap.config.data['campux_qq_admin_uin'],
-                    "空间cookies失效，当前有稿件待发布，请尽快更新cookies。"
+                asyncio.create_task(self.ap.imbot.send_group_message(
+                    self.ap.config.data['campux_review_qq_group_id'],
+                    "空间cookies失效，当前有稿件待发布，请尽快重新登录 QQ 空间。"
                 ))
 
             logger.warning("social模块未准备好，无法发布稿件。")

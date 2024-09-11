@@ -40,8 +40,6 @@ async def fdelay(seconds: float=3):
 sign_up = on_command("注册账号", rule=to_me() & is_private & not_bot_self, priority=10, block=True)
 reset_password = on_command("重置密码", rule=to_me() & is_private & not_bot_self, priority=10, block=True)
 
-relogin_qzone = on_command("更新cookies", rule=to_me() & is_private & not_bot_self, priority=10, block=True)
-
 any_message = on_regex(r".*", rule=to_me() & is_private, priority=100, block=True)
 
 @sign_up.handle()
@@ -73,34 +71,6 @@ async def reset_password_func(event: Event):
         traceback.print_exc()
         await reset_password.finish(str(e))
 
-@relogin_qzone.handle()
-async def relogin_qzone_func(event: Event):
-    user_id = int(event.get_user_id())
-
-    if user_id != ap.config.data['campux_qq_admin_uin']:
-        await relogin_qzone.finish("无权限")
-        return
-
-    async def qrcode_callback(content: bytes):
-        asyncio.create_task(ap.imbot.send_private_message(
-            ap.config.data['campux_qq_admin_uin'],
-            message=[
-                message.MessageSegment.text("请使用QQ扫描以下二维码以登录QQ空间："),
-                message.MessageSegment.image(content)
-            ]
-        ))
-
-    try:
-
-        await fdelay()
-
-        await ap.social.platform_api.relogin(qrcode_callback)
-    except Exception as e:
-        if isinstance(e, nonebot.exception.FinishedException):
-            return
-        traceback.print_exc()
-        await relogin_qzone.finish(str(e))
-
 @any_message.handle()
 async def any_message_func(event: Event):
     if not can_send_help_message(int(event.get_user_id())):
@@ -114,22 +84,28 @@ async def any_message_func(event: Event):
 async def is_group(event: Event):
     return type(event) == ob11_event.GroupMessageEvent
 
+async def is_admin_group(event: Event):
+    return int(event.group_id) == int(ap.config.data['campux_review_qq_group_id'])
+
 async def is_review_allow(event: Event):
     if type(event) == ob11_event.PrivateMessageEvent:
         return False
     return ap.config.data['campux_qq_group_review'] and int(event.group_id) == int(ap.config.data['campux_review_qq_group_id'])
 
 # #通过 [id]
-approve_post = on_command("通过", rule=to_me() & is_group & is_review_allow, priority=10, block=True)
+approve_post = on_command("通过", rule=to_me() & is_group & is_admin_group & is_review_allow, priority=10, block=True)
 
 # #拒绝 <原因> [id]
-reject_post = on_command("拒绝", rule=to_me() & is_group & is_review_allow, priority=10, block=True)
+reject_post = on_command("拒绝", rule=to_me() & is_group & is_admin_group & is_review_allow, priority=10, block=True)
 
 # 重发 <id>
-resend_post = on_command("重发", rule=to_me() & is_group, priority=10, block=True)
+resend_post = on_command("重发", rule=to_me() & is_group & is_admin_group, priority=10, block=True)
+
+# 登录 QQ 空间
+login_qzone = on_command("登录", rule=to_me() & is_group & is_admin_group, priority=10, block=True)
 
 # 其他命令，发帮助信息
-any_message_group = on_regex(r".*", rule=to_me() & is_group & is_review_allow, priority=100, block=True)
+any_message_group = on_regex(r".*", rule=to_me() & is_group & is_admin_group & is_review_allow, priority=100, block=True)
 
 
 @approve_post.handle()
@@ -235,6 +211,34 @@ async def resend_post_func(event: Event):
             return
         traceback.print_exc()
         await resend_post.finish(str(e))
+
+@login_qzone.handle()
+async def login_qzone_func(event: Event):
+
+    async def qrcode_callback(content: bytes):
+        asyncio.create_task(ap.imbot.send_group_message(
+            ap.config.data['campux_review_qq_group_id'],
+            message=[
+                message.MessageSegment.text("请使用本号 QQ 手机端扫描以下二维码以登录 QQ空间："),
+                message.MessageSegment.image(content)
+            ]
+        ))
+
+    try:
+
+        await fdelay()
+
+        await ap.social.platform_api.relogin(qrcode_callback)
+
+        await ap.imbot.send_group_message(
+            ap.config.data['campux_review_qq_group_id'],
+            "登录流程完成。"
+        )
+    except Exception as e:
+        if isinstance(e, nonebot.exception.FinishedException):
+            return
+        traceback.print_exc()
+        await login_qzone.finish(str(e))
 
 @any_message_group.handle()
 async def any_message_group_func(event: Event):

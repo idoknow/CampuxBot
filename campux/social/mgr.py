@@ -58,9 +58,9 @@ class SocialPlatformManager:
 
                     nonebot.logger.info("QQ空间cookies已失效，发送通知。")
 
-                    asyncio.create_task(self.ap.imbot.send_private_message(
-                        self.ap.config.data['campux_qq_admin_uin'],
-                        "QQ空间cookies已失效，请发送 #更新cookies 命令进行重新登录。"
+                    asyncio.create_task(self.ap.imbot.send_group_message(
+                        self.ap.config.data['campux_review_qq_group_id'],
+                        "QQ空间cookies已失效，请 @ 并发送 #登录 命令进行重新登录。"
                     ))
 
                     self.current_invalid_cookies = self.platform_api.cookies
