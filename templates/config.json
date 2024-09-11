@@ -15,6 +15,5 @@
     "campux_review_help_message": "审核命令：\n#通过 <稿件id>\n\n#拒绝 <理由> <稿件id>\n\n例如：\n#通过 10\n#拒绝 测试理由 10",
     "campux_review_qq_group_id": 123456789,
     "campux_domain": "campux",
-    "campux_qq_bot_uin": 123456789,
-    "campux_qq_admin_uin": 234567890
+    "campux_qq_bot_uin": 123456789
 }
