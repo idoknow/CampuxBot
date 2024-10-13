@@ -224,6 +224,9 @@ async def login_qzone_func(event: Event):
             ]
         ))
 
+    async def ob11_auto_callback(result: dict):
+        print(result)
+
     try:
 
         await fdelay()
@@ -231,8 +234,8 @@ async def login_qzone_func(event: Event):
         await ap.social.platform_api.relogin(
             strategy=ap.config.data['campux_qzone_cookies_refresh_strategy'],
             qrcode_callback=qrcode_callback,
+            ob11_auto_callback=ob11_auto_callback,
             ob11_bot=nonebot.get_bot(),
-            ob11_auto_callback=lambda result: print(result),
         )
 
         await ap.imbot.send_group_message(
