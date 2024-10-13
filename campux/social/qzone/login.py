@@ -99,8 +99,11 @@ class QzoneLogin:
         cookies = await ob11_bot.get_cookies(
             domain='qzone.qq.com',
         )
+        print("raw cookies:", cookies)
 
         cookies = cookies.get('cookies', {})
+
+        print("parsed cookies:", cookies)
 
         await ob11_auto_callback(cookies)
 
