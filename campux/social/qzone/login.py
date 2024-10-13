@@ -97,7 +97,7 @@ class QzoneLogin:
         ob11_bot: onebot.v11.Bot,
     ):
         cookies = await ob11_bot.get_cookies(
-            domain='ssl.ptlogin2.qq.com',
+            domain='user.qzone.qq.com',
         )
         print("raw cookies:", cookies)
 
