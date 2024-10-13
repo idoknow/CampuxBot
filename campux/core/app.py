@@ -14,6 +14,7 @@ from ..social import mgr as social_mgr
 from ..imbot import mgr as imbot_mgr
 from ..common import cache as cache_mgr
 from ..config import manager as config_mgr
+from ..config import migration
 
 
 class Application:
@@ -81,6 +82,12 @@ async def create_app() -> Application:
     )
 
     await config.load_config()
+
+    # 迁移
+    for migration_cls in migration.preregistered_migrations:
+        migration_inst = migration_cls(ap=ap)
+        if await migration_inst.need_migrate():
+            await migration_inst.migrate()
 
     # 读取环境变量进行替换, for config
     config_data = config.data.copy()

@@ -6,6 +6,7 @@ import base64
 import traceback
 
 import requests
+from nonebot.adapters import onebot
 
 from ...core import app
 from . import login
@@ -117,10 +118,19 @@ class QzoneAPI:
 
         return str(pic_base64)[2:-1]
 
-    async def relogin(self, callback: callable):
+    async def relogin(
+        self,
+        strategy: str='qrcode',
+        qrcode_callback: callable=lambda qrcode: None,
+        ob11_auto_callback: callable=lambda result: None,
+        ob11_bot: onebot.v11.Bot=None,  # 如果strategy为ob11_auto，则需要传入一个onebot v11的bot实例
+    ):
         loginmgr = login.QzoneLogin()
 
-        self.cookies = await loginmgr.login_via_qrcode(callback)
+        if strategy == 'qrcode':
+            self.cookies = await loginmgr.login_via_qrcode(qrcode_callback)
+        elif strategy == 'ob11_auto':
+            self.cookies = await loginmgr.login_via_ob11_bot(ob11_auto_callback, ob11_bot)
 
         if 'p_skey' in self.cookies:
             self.gtk2 = generate_gtk(self.cookies['p_skey'])

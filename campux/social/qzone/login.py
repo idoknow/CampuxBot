@@ -5,6 +5,7 @@ import asyncio
 import re
 
 import requests
+from nonebot.adapters import onebot
 
 qrcode_url = "https://ssl.ptlogin2.qq.com/ptqrshow?appid=549000912&e=2&l=M&s=3&d=72&v=4&t=0.31232733520361844&daid=5&pt_3rd_aid=0"
 
@@ -89,6 +90,21 @@ class QzoneLogin:
 
                     return final_cookie_dict
         raise Exception("{}次尝试失败".format(max_timeout_times))
+    
+    async def login_via_ob11_bot(
+        self,
+        ob11_auto_callback: typing.Callable[[dict], typing.Awaitable[None]],
+        ob11_bot: onebot.v11.Bot,
+    ):
+        cookies = await ob11_bot.get_cookies(
+            domain='qzone.qq.com',
+        )
+
+        cookies = cookies.get('cookies', {})
+
+        await ob11_auto_callback(cookies)
+
+        return cookies
 
 
 if __name__ == '__main__':
