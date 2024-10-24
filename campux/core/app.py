@@ -83,6 +83,8 @@ async def create_app() -> Application:
 
     await config.load_config()
 
+    ap = Application()
+
     # 迁移
     for migration_cls in migration.preregistered_migrations:
         migration_inst = migration_cls(ap=ap)
@@ -108,7 +110,6 @@ async def create_app() -> Application:
     cache = cache_mgr.CacheManager()
     cache.load()
 
-    ap = Application()
     ap.cache = cache
     ap.meta = meta
     ap.config = config
