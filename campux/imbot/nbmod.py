@@ -73,6 +73,8 @@ async def reset_password_func(event: Event):
 
 @any_message.handle()
 async def any_message_func(event: Event):
+    print('收到私聊消息', event)
+
     if not can_send_help_message(int(event.get_user_id())):
         return
     
