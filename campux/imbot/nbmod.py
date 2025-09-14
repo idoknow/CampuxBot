@@ -106,6 +106,13 @@ resend_post = on_command("重发", rule=to_me() & is_group & is_admin_group, pri
 # 登录 QQ 空间
 login_qzone = on_command("登录", rule=to_me() & is_group & is_admin_group, priority=10, block=True)
 
+# easter_egg
+easter_egg = nonebot.on_keyword(['秦骏言'], rule=to_me(), priority=10, block=True)
+
+@easter_egg.handle()
+async def easter_egg_func(event: Event):
+    await easter_egg.finish("秦骏言是好人。")
+
 # 其他命令，发帮助信息
 any_message_group = on_regex(r".*", rule=to_me() & is_group & is_admin_group & is_review_allow, priority=100, block=True)
 
