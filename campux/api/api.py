@@ -106,6 +106,17 @@ class CampuxAPI:
 
         return entity.Post(**data['post'])
     
+    async def get_post_logs(self, post_id: int) -> list:
+        """/v1/post/post-log/{post_id}
+        
+        GET
+        """
+        data = await self.data(
+            "GET",
+            f"/v1/post/post-log/{post_id}"
+        )
+        return data.get('list', [])
+
     async def download_image(self, image_key: str) -> bytes:
         """/v1/post/download-image/{image-key}
         

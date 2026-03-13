@@ -97,3 +97,30 @@ class IMBotManager:
                 self.ap.config.data['campux_review_qq_group_id'],
                 msg
             ))
+    async def send_review_notify(
+        self,
+        post_id: int
+    ):
+        try:
+            post = await self.ap.cpx_api.get_post_info(post_id)
+            if not post:
+                return
+            
+            user_id = post.uin
+            
+            if post.status == "approved":
+                msg = f"您的稿件 #{post.id} 已通过审核"
+                await self.send_private_message(user_id, msg)
+            elif post.status == "rejected":
+                logs = await self.ap.cpx_api.get_post_logs(post_id)
+                comment = "无"
+                if logs and len(logs) > 0:
+                    latest_log = logs[-1]
+                    if 'comment' in latest_log:
+                        comment = latest_log['comment']
+                
+                msg = f"您的稿件 #{post.id} 未通过审核，原因：{comment}"
+                await self.send_private_message(user_id, msg)
+                
+        except Exception as e:
+            logger.error(f"发送稿件审核通知失败：{e}")

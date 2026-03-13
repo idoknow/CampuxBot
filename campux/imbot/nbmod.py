@@ -145,6 +145,14 @@ async def approve_post_func(event: Event):
                         "群内审核通过"
                     )
 
+                    try:
+                        await ap.imbot.send_private_message(
+                            post.uin,
+                            f"您的稿件 #{post_id} 已通过审核"
+                        )
+                    except Exception as e:
+                        logger.error(f"直接发送审核通过通知失败：{e}")
+
                     await approve_post.finish(f"已通过 #{post_id}")
                 else:
                     await approve_post.finish(f"稿件 #{post_id} 状态不是待审核")
@@ -183,6 +191,14 @@ async def reject_post_func(event: Event):
                         "rejected",
                         f"群内审核拒绝，原因：{comment}"
                     )
+
+                    try:
+                        await ap.imbot.send_private_message(
+                            post.uin,
+                            f"您的稿件 #{post_id} 未通过审核，原因：{comment}"
+                        )
+                    except Exception as e:
+                        logger.error(f"直接发送审核拒绝通知失败：{e}")
 
                     await reject_post.finish(f"已拒绝 #{post_id}")
                 else:
