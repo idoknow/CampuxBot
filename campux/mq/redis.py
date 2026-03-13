@@ -30,6 +30,10 @@ class RedisNameProxy:
         return f"{self.ap.config.data['campux_domain']}.post_cancel"
 
     @property
+    def campux_redis_post_review_stream(self):
+        return f"{self.ap.config.data['campux_domain']}.post_review"
+
+    @property
     def campux_redis_post_publish_status_hash(self):
         return f"{self.ap.config.data['campux_domain']}.post_publish_status"
 
@@ -62,6 +66,7 @@ class RedisStreamMQ:
             self.ap.redis_name_proxy.campux_redis_publish_post_stream,
             self.ap.redis_name_proxy.campux_redis_new_post_stream,
             self.ap.redis_name_proxy.campux_redis_post_cancel_stream,
+            self.ap.redis_name_proxy.campux_redis_post_review_stream,
         ]
 
         for stream in streams_to_check:
@@ -86,6 +91,7 @@ class RedisStreamMQ:
                 await self.process_stream(self.ap.redis_name_proxy.campux_redis_publish_post_stream, self.check_publish_post)
                 await self.process_stream(self.ap.redis_name_proxy.campux_redis_new_post_stream, self.check_new_post)
                 await self.process_stream(self.ap.redis_name_proxy.campux_redis_post_cancel_stream, self.check_post_cancel)
+                await self.process_stream(self.ap.redis_name_proxy.campux_redis_post_review_stream, self.check_post_review)
                 await asyncio.sleep(30)
 
         asyncio.create_task(routine_loop())
@@ -188,3 +194,11 @@ class RedisStreamMQ:
         await self.ap.imbot.send_post_cancel_notify(post_id)
 
         await self.redis_client.xack(self.ap.redis_name_proxy.campux_redis_post_cancel_stream, self.get_instance_identity(), message[0])
+
+    async def check_post_review(self, message: tuple):
+        logger.info(f"处理消息：{message}")
+
+        post_id = int(message[1][b'post_id'].decode('utf-8'))
+
+        await self.ap.imbot.send_review_notify(post_id)
+
