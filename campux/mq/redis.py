@@ -202,3 +202,5 @@ class RedisStreamMQ:
 
         await self.ap.imbot.send_review_notify(post_id)
 
+        await self.redis_client.xack(self.ap.redis_name_proxy.campux_redis_post_review_stream, self.get_instance_identity(), message[0])
+
