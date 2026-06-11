@@ -1,3 +1,5 @@
+Campux 新版（2026.5）架构下，不再需要独立 bot 端，请见 [idoknow/Campux](https://github.com/idoknow/Campux); 此仓库现在归档。
+
 # CampuxBot
 
 [Campux](https://github.com/RockChinQ/Campux) 的机器人端。
